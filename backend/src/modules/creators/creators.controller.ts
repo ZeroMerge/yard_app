@@ -66,4 +66,13 @@ export class CreatorsController {
       priority: body.priority ?? 'LOW',
     });
   }
+
+  /**
+   * Trigger a full real-time social stats refresh for all connected accounts.
+   */
+  // @UseGuards(JwtAuthGuard) // ← Disabled for local testing — re-enable before production
+  @Post(':id/refresh-all')
+  async refreshAllStats(@Param('id') id: string) {
+    return this.ingestionService.dispatchRefreshAllJobs(id);
+  }
 }

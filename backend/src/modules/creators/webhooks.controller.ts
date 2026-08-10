@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, HttpException, Logger, Req, RawBodyRequest } from '@nestjs/common';
+import { Controller, Post, Get, Query, Body, Headers, HttpException, Logger, Req, RawBodyRequest } from '@nestjs/common';
 import { Request } from 'express';
 import { PrismaService } from '../../common/prisma.service';
 import { ConfigService } from '@nestjs/config';
@@ -131,5 +131,35 @@ export class WebhooksController {
     }
 
     return { received: true, stored: false };
+  }
+
+  @Get('verify-target')
+  async verifyTarget(
+    @Query('platform') platform: string,
+    @Query('target') target: string,
+    @Headers('authorization') authHeader: string,
+  ) {
+    // 1. Verify internal API bearer token (same as Python Engine's API_BEARER_TOKEN)
+    const expectedToken = this.config.get<string>('INGESTION_API_BEARER_TOKEN');
+    if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
+      throw new HttpException('Unauthorized', 401);
+    }
+
+    if (!platform || !target) {
+      throw new HttpException('Missing platform or target', 400);
+    }
+
+    // 2. Check if the handle or profile_url matches any known creator account
+    const account = await this.prisma.creatorSocialAccount.findFirst({
+      where: {
+        platform: platform,
+        OR: [
+          { handle: { equals: target, mode: 'insensitive' } },
+          { profileUrl: { contains: target, mode: 'insensitive' } }
+        ]
+      }
+    });
+
+    return { valid: !!account };
   }
 }

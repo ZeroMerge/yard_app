@@ -83,11 +83,14 @@ model Creator {
 }
 
 model CreatorSocialAccount {
-  id         String  @id @default(uuid())
-  creatorId  String  @map("creator_id")
-  platform   String
-  handle     String
-  profileUrl String  @map("profile_url")
+  id              String    @id @default(uuid())
+  creatorId       String    @map("creator_id")
+  platform        String
+  handle          String
+  profileUrl      String    @map("profile_url")
+  oauthToken      String?   @map("oauth_token")       // Encrypted OAuth access token
+  refreshToken    String?   @map("refresh_token")     // Encrypted OAuth refresh token
+  tokenExpiresAt  DateTime? @map("token_expires_at")  // When the access token expires
 
   creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
