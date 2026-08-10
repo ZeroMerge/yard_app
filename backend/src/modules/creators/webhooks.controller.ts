@@ -48,8 +48,10 @@ export class WebhooksController {
       throw new HttpException('Missing security headers', 401);
     }
 
-    // Replay attack guard: reject webhooks older than 5 minutes
-    const webhookAge = Date.now() - parseInt(timestamp, 10) * 1000;
+    // Replay attack guard: reject webhooks older than 5 minutes (supports both s and ms timestamps)
+    const tsNum = parseInt(timestamp, 10);
+    const tsMs = tsNum > 100000000000 ? tsNum : tsNum * 1000;
+    const webhookAge = Math.abs(Date.now() - tsMs);
     if (webhookAge > 5 * 60 * 1000) {
       this.logger.warn(`[Webhook] Stale webhook rejected. Age: ${Math.round(webhookAge / 1000)}s`);
       throw new HttpException('Webhook timestamp is too old (replay attack guard)', 401);
