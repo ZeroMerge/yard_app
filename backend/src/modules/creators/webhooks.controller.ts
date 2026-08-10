@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Headers, HttpException, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Headers, HttpException, Logger, Req, RawBodyRequest } from '@nestjs/common';
+import { Request } from 'express';
 import { PrismaService } from '../../common/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
@@ -34,6 +35,7 @@ export class WebhooksController {
 
   @Post('ingestion')
   async handleIngestionWebhook(
+    @Req() req: RawBodyRequest<Request>,
     @Body() payload: IngestionWebhookPayload,
     @Headers('x-yard-signature') signature: string,
     @Headers('x-yard-timestamp') timestamp: string,
@@ -53,14 +55,21 @@ export class WebhooksController {
       throw new HttpException('Webhook timestamp is too old (replay attack guard)', 401);
     }
 
-    // Verify HMAC-SHA256 signature
+    // Verify HMAC-SHA256 signature using the raw unparsed buffer
+    const rawBodyBuffer = req.rawBody;
+    if (!rawBodyBuffer) {
+      throw new HttpException('Missing raw body for webhook verification', 400);
+    }
+    
+    // The Python engine signs exactly: timestamp + "." + raw JSON bytes
+    const message = Buffer.concat([Buffer.from(`${timestamp}.`), rawBodyBuffer]);
     const expectedSig = crypto
       .createHmac('sha256', webhookSecret)
-      .update(`${timestamp}.${JSON.stringify(payload)}`)
+      .update(message)
       .digest('hex');
 
     if (signature !== `sha256=${expectedSig}`) {
-      this.logger.warn('[Webhook] HMAC signature mismatch — rejecting request');
+      this.logger.warn(`[Webhook] HMAC signature mismatch. Expected sha256=${expectedSig}, got ${signature}`);
       throw new HttpException('Invalid webhook signature', 401);
     }
 
