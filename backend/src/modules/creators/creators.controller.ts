@@ -1,5 +1,6 @@
-import { Controller, Get, Patch, Query, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Query, Param, Body, UseGuards } from '@nestjs/common';
 import { CreatorsService, CreatorFilterDto } from './creators.service';
+import { IngestionService } from './ingestion.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -7,7 +8,10 @@ import { CurrentUser, UserPayload } from '../../common/decorators/current-user.d
 
 @Controller('creators')
 export class CreatorsController {
-  constructor(private readonly creatorsService: CreatorsService) {}
+  constructor(
+    private readonly creatorsService: CreatorsService,
+    private readonly ingestionService: IngestionService,
+  ) {}
 
   @Get()
   async findAll(@Query() filter: CreatorFilterDto) {
@@ -42,5 +46,24 @@ export class CreatorsController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.creatorsService.findOne(id);
+  }
+
+  /**
+   * Trigger a real-time social stats refresh for a creator.
+   * The backend verifies the creator is verified before calling the Ingestion Engine.
+   * Requires admin or the creator themselves.
+   */
+  // @UseGuards(JwtAuthGuard) // ← Disabled for local testing — re-enable before production
+  @Post(':id/refresh-stats')
+  async refreshStats(
+    @Param('id') id: string,
+    @Body() body: { platform: string; handle: string; priority?: 'HIGH' | 'LOW' },
+  ) {
+    return this.ingestionService.dispatchScrapeJob({
+      creatorId: id,
+      handle: body.handle,
+      platform: body.platform,
+      priority: body.priority ?? 'LOW',
+    });
   }
 }

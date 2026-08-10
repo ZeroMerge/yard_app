@@ -56,30 +56,38 @@ export class JobsService {
 
   @Cron(CronExpression.EVERY_10_MINUTES)
   async reconcilePayments() {
-    await this.paymentsService.reconcilePendingPayments();
+    try {
+      await this.paymentsService.reconcilePendingPayments();
+    } catch (err) {
+      this.logger.error(`[JobsService] Failed to execute payment reconciliation cron: ${err.message}`);
+    }
   }
 
   @Cron(CronExpression.EVERY_HOUR)
   async checkDeliveryDeadlines() {
-    const now = new Date();
-    const overdueCampaigns = await this.prisma.campaign.findMany({
-      where: {
-        deliveryDeadline: { lt: now },
-        status: 'in_progress',
-      },
-    });
+    try {
+      const now = new Date();
+      const overdueCampaigns = await this.prisma.campaign.findMany({
+        where: {
+          deliveryDeadline: { lt: now },
+          status: 'in_progress',
+        },
+      });
 
-    if (overdueCampaigns.length > 0) {
-      this.logger.log(`[JobsService] Detected ${overdueCampaigns.length} campaigns past delivery deadline`);
-      for (const camp of overdueCampaigns) {
-        await this.prisma.campaignActivity.create({
-          data: {
-            campaignId: camp.id,
-            eventType: 'deadline_warning',
-            body: `Campaign '${camp.name}' passed scheduled delivery deadline of ${camp.deliveryDeadline?.toISOString()}.`,
-          },
-        });
+      if (overdueCampaigns.length > 0) {
+        this.logger.log(`[JobsService] Detected ${overdueCampaigns.length} campaigns past delivery deadline`);
+        for (const camp of overdueCampaigns) {
+          await this.prisma.campaignActivity.create({
+            data: {
+              campaignId: camp.id,
+              eventType: 'deadline_warning',
+              body: `Campaign '${camp.name}' passed scheduled delivery deadline of ${camp.deliveryDeadline?.toISOString()}.`,
+            },
+          });
+        }
       }
+    } catch (err) {
+      this.logger.error(`[JobsService] Failed to check delivery deadlines: ${err.message}`);
     }
   }
 }

@@ -228,16 +228,36 @@ export class PaymentsService {
   }
 
   async reconcilePendingPayments() {
-    this.logger.log('[PaymentsService] Running payment reconciliation check for pending transfers...');
-    const pendingPayments = await this.prisma.payment.findMany({
-      where: { status: { in: ['payment_initiated', 'creator_payout_pending'] } },
-      take: 20,
-    });
+    try {
+      // Only fetch unresolved pending payments that have NO child terminal status and are > 5 mins old
+      const pendingPayments = await this.prisma.payment.findMany({
+        where: {
+          status: { in: ['payment_initiated', 'creator_payout_pending'] },
+          childPayments: { none: {} },
+          createdAt: { lt: new Date(Date.now() - 5 * 60 * 1000) },
+        },
+        take: 10,
+      });
 
-    for (const payment of pendingPayments) {
-      this.logger.log(`[Reconciliation] Checking payment ${payment.id} with provider ${payment.provider}`);
+      if (pendingPayments.length === 0) {
+        return { reconciledCount: 0 };
+      }
+
+      this.logger.log(`[PaymentsService] Reconciling ${pendingPayments.length} pending transfer(s)...`);
+
+      for (const payment of pendingPayments) {
+        try {
+          const provider = this.getProvider(payment.provider);
+          this.logger.log(`[Reconciliation] Checking payment ${payment.id} with provider ${provider.name}`);
+        } catch (err) {
+          this.logger.warn(`[Reconciliation] Error checking payment ${payment.id}: ${err.message}`);
+        }
+      }
+
+      return { reconciledCount: pendingPayments.length };
+    } catch (err) {
+      this.logger.error(`[PaymentsService] Payment reconciliation error: ${err.message}`);
+      return { reconciledCount: 0 };
     }
-
-    return { reconciledCount: pendingPayments.length };
   }
 }
