@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { campaignsApi } from "@/api/campaigns";
 import { toast } from "sonner";
-import { Sparkles, Calendar } from "lucide-react";
+import { SparklesIcon as Sparkles, CalendarIcon as Calendar } from '@heroicons/react/24/outline';
 
 const NICHES = ["Beauty", "Fashion", "Tech", "Lifestyle", "Travel", "Food", "Finance", "Fitness"];
 const DELIVERABLE_TYPES = ["reel", "tiktok", "youtube_video", "story", "carousel"];
@@ -64,130 +64,130 @@ const NewCampaign = () => {
   };
 
   return (
-    <div>
+    <div className="space-y-8 lg:space-y-10 pb-20 animate-in fade-in duration-300">
       <PageHeader
         title="Create Campaign Brief"
         subtitle="Set up your campaign parameters, creator slots, and deliverables in one linear flow."
       />
-      <form onSubmit={submit} className="cy-card p-8 max-w-3xl space-y-6 shadow-sm">
-        <div className="space-y-2">
-          <Label className="font-semibold text-sm">Campaign Title</Label>
+      <form onSubmit={submit} className="bg-card border border-border/60 rounded-md p-6 sm:p-8 max-w-3xl space-y-6 shadow-2xs">
+        <div>
+          <Label className="font-bold text-xs text-foreground block mb-1.5">Campaign Title</Label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Lagos Skincare Summer Drop 2026"
-            className="rounded-xl h-11 bg-surface-2 dark:bg-surface border-0 focus-visible:ring-teal-500"
+            className="w-full h-10 p-2.5 bg-surface-2/60 dark:bg-surface border border-border/40 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <Label className="font-semibold text-sm">Brief & Creative Requirements</Label>
+        <div>
+          <Label className="font-bold text-xs text-foreground block mb-1.5">Brief & Creative Requirements</Label>
           <Textarea
             value={brief}
             onChange={(e) => setBrief(e.target.value)}
             rows={4}
             placeholder="What is the core talking point? What should creators showcase in their video?"
-            className="rounded-xl bg-surface-2 dark:bg-surface border-0 focus-visible:ring-teal-500 leading-relaxed"
+            className="w-full p-3 bg-surface-2/60 dark:bg-surface border border-border/40 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all resize-none leading-relaxed"
             required
           />
         </div>
 
         <div className="grid sm:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label className="font-semibold text-sm">Currency</Label>
+          <div>
+            <Label className="font-bold text-xs text-foreground block mb-1.5">Currency</Label>
             <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger className="rounded-xl h-11 bg-surface-2 dark:bg-surface border-0 focus:ring-teal-500">
+              <SelectTrigger className="w-full h-10 rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 text-xs sm:text-sm focus:ring-teal-500/20">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="NGN">NGN (₦)</SelectItem>
-                <SelectItem value="USD">USD ($)</SelectItem>
+              <SelectContent className="rounded-md border-border/40 bg-card shadow-elevated">
+                <SelectItem value="NGN" className="text-xs">NGN (₦)</SelectItem>
+                <SelectItem value="USD" className="text-xs">USD ($)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label className="font-semibold text-sm">Budget Per Creator</Label>
+          <div>
+            <Label className="font-bold text-xs text-foreground block mb-1.5">Budget Per Creator</Label>
             <Input
               type="number"
               min={1000}
               value={budgetPerCreator}
               onChange={(e) => setBudgetPerCreator(Number(e.target.value))}
-              className="rounded-xl h-11 bg-surface-2 dark:bg-surface border-0 focus-visible:ring-teal-500"
+              className="w-full h-10 p-2.5 bg-surface-2/60 dark:bg-surface border border-border/40 rounded-md text-xs sm:text-sm font-numeric focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label className="font-semibold text-sm">Creator Slots</Label>
+          <div>
+            <Label className="font-bold text-xs text-foreground block mb-1.5">Creator Slots</Label>
             <Input
               type="number"
               min={1}
               max={50}
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
-              className="rounded-xl h-11 bg-surface-2 dark:bg-surface border-0 focus-visible:ring-teal-500"
+              className="w-full h-10 p-2.5 bg-surface-2/60 dark:bg-surface border border-border/40 rounded-md text-xs sm:text-sm font-numeric focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
               required
             />
           </div>
         </div>
 
         <div className="grid sm:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label className="font-semibold text-sm">Niche / Category</Label>
+          <div>
+            <Label className="font-bold text-xs text-foreground block mb-1.5">Niche / Category</Label>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="rounded-xl h-11 bg-surface-2 dark:bg-surface border-0 focus:ring-teal-500">
+              <SelectTrigger className="w-full h-10 rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 text-xs sm:text-sm focus:ring-teal-500/20">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-md border-border/40 bg-card shadow-elevated">
                 {NICHES.map((n) => (
-                  <SelectItem key={n} value={n}>{n}</SelectItem>
+                  <SelectItem key={n} value={n} className="text-xs capitalize">{n}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label className="font-semibold text-sm">Deliverable Format</Label>
+          <div>
+            <Label className="font-bold text-xs text-foreground block mb-1.5">Deliverable Format</Label>
             <Select value={deliverableType} onValueChange={setDeliverableType}>
-              <SelectTrigger className="rounded-xl h-11 bg-surface-2 dark:bg-surface border-0 focus:ring-teal-500">
+              <SelectTrigger className="w-full h-10 rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 text-xs sm:text-sm focus:ring-teal-500/20">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-md border-border/40 bg-card shadow-elevated">
                 {DELIVERABLE_TYPES.map((d) => (
-                  <SelectItem key={d} value={d} className="capitalize">{d.replace("_", " ")}</SelectItem>
+                  <SelectItem key={d} value={d} className="text-xs capitalize">{d.replace("_", " ")}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label className="font-semibold text-sm">Target Country</Label>
+          <div>
+            <Label className="font-bold text-xs text-foreground block mb-1.5">Target Country</Label>
             <Input
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              className="rounded-xl h-11 bg-surface-2 dark:bg-surface border-0 focus-visible:ring-teal-500"
+              className="w-full h-10 p-2.5 bg-surface-2/60 dark:bg-surface border border-border/40 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
               required
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label className="font-semibold text-sm">Delivery Deadline</Label>
+        <div>
+          <Label className="font-bold text-xs text-foreground block mb-1.5">Delivery Deadline</Label>
           <Input
             type="date"
             value={deliveryDeadline}
             onChange={(e) => setDeliveryDeadline(e.target.value)}
-            className="rounded-xl h-11 bg-surface-2 dark:bg-surface border-0 focus-visible:ring-teal-500"
+            className="w-full h-10 p-2.5 bg-surface-2/60 dark:bg-surface border border-border/40 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
             required
           />
         </div>
 
         <div className="flex gap-3 justify-end pt-4 border-t border-border/30">
-          <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="rounded-xl">
+          <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="rounded-md text-xs font-semibold px-4 py-2 hover:bg-surface-2/60 transition-colors">
             Cancel
           </Button>
           <Button
             type="submit"
             disabled={createMutation.isPending}
-            className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl px-6 shadow-sm"
+            className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-md px-5 py-2.5 shadow-xs transition-colors"
           >
             {createMutation.isPending ? "Creating..." : "Publish Campaign Brief"}
           </Button>

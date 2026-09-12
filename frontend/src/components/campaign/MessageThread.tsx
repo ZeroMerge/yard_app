@@ -5,7 +5,7 @@ import { loadDB, saveDB, uid } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
-import { Paperclip, Send } from "lucide-react";
+import { PaperClipIcon as Paperclip, PaperAirplaneIcon as Send } from '@heroicons/react/24/outline';
 import { motion } from "framer-motion";
 import { pushActivity } from "@/lib/activity";
 
@@ -69,42 +69,42 @@ export const MessageThread = ({ campaignId, otherPartyIds }: Props) => {
   };
 
   return (
-    <div className="cy-card flex flex-col h-[480px]">
-      <div className="p-4 border-b border-border">
-        <h3 className="font-display font-semibold">Messages</h3>
-        <p className="text-xs text-muted-foreground">Conversation between brand & creator on this campaign.</p>
+    <div className="bg-card border border-border/60 rounded-md shadow-2xs overflow-hidden flex flex-col h-[480px]">
+      <div className="p-4 border-b border-border/40">
+        <h3 className="font-display font-bold text-base text-foreground tracking-tight">Messages</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Conversation between brand & creator on this campaign.</p>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-        {msgs.length === 0 && <div className="text-center text-sm text-muted-foreground mt-12">No messages yet. Start the conversation.</div>}
+        {msgs.length === 0 && <div className="text-center text-xs sm:text-sm text-muted-foreground mt-12">No messages yet. Start the conversation.</div>}
         {msgs.map((m) => {
           const mine = m.senderId === user.id;
           const sender = db.users.find((u) => u.id === m.senderId);
           return (
             <motion.div key={m.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-secondary text-secondary-foreground" : "bg-muted text-foreground"}`}>
-                {!mine && <div className="text-[11px] font-semibold opacity-70 mb-0.5">{sender?.name}</div>}
-                {m.body && <div className="whitespace-pre-wrap">{m.body}</div>}
+              <div className={`max-w-[80%] rounded-md px-3.5 py-2.5 text-xs sm:text-sm ${mine ? "bg-teal-600 text-white shadow-2xs" : "bg-surface-2 text-foreground border border-border/40"}`}>
+                {!mine && <div className="text-[11px] font-semibold opacity-80 mb-0.5">{sender?.name}</div>}
+                {m.body && <div className="whitespace-pre-wrap leading-relaxed">{m.body}</div>}
                 {m.attachments?.map((a, i) => (
                   <a key={i} href={a.url} download={a.name} className="mt-1.5 inline-flex items-center gap-1.5 text-xs underline opacity-90">
                     <Paperclip className="h-3 w-3" /> {a.name}
                   </a>
                 ))}
-                <div className={`text-[10px] mt-1 ${mine ? "text-secondary-foreground/60" : "text-muted-foreground"}`}>{formatRelative(m.createdAt)}</div>
+                <div className={`text-[10px] mt-1 font-mono ${mine ? "text-white/70" : "text-muted-foreground"}`}>{formatRelative(m.createdAt)}</div>
               </div>
             </motion.div>
           );
         })}
       </div>
-      <div className="p-3 border-t border-border space-y-2">
+      <div className="p-3 border-t border-border/40 space-y-2">
         {attachment && (
-          <div className="text-xs text-muted-foreground flex items-center justify-between bg-muted rounded px-2 py-1">
+          <div className="text-xs text-muted-foreground flex items-center justify-between bg-surface-2 border border-border/40 rounded-md px-2.5 py-1">
             <span className="truncate">📎 {attachment.name}</span>
-            <button onClick={() => setAttachment(null)} className="ml-2 text-foreground">×</button>
+            <button onClick={() => setAttachment(null)} className="ml-2 text-foreground font-bold">×</button>
           </div>
         )}
         <div className="flex items-center gap-2">
           <input type="file" hidden ref={fileRef} onChange={onFile} />
-          <Button type="button" size="icon" variant="ghost" onClick={() => fileRef.current?.click()}>
+          <Button type="button" size="icon" variant="ghost" onClick={() => fileRef.current?.click()} className="rounded-md h-9 w-9 text-muted-foreground hover:text-foreground">
             <Paperclip className="h-4 w-4" />
           </Button>
           <Input
@@ -112,8 +112,9 @@ export const MessageThread = ({ campaignId, otherPartyIds }: Props) => {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            className="rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 text-xs sm:text-sm h-9"
           />
-          <Button onClick={send} size="icon" className="bg-secondary text-secondary-foreground hover:bg-secondary/90"><Send className="h-4 w-4" /></Button>
+          <Button onClick={send} size="icon" className="bg-teal-600 hover:bg-teal-700 text-white rounded-md h-9 w-9 shadow-xs shrink-0"><Send className="h-4 w-4" /></Button>
         </div>
       </div>
     </div>

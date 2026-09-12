@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma.service';
-import { FlutterwaveProvider } from '../../providers/payments/FlutterwaveProvider';
+import { ManualPaymentProvider } from '../../providers/payments/ManualPaymentProvider';
 import { PaystackProvider } from '../../providers/payments/PaystackProvider';
 import { PaymentProvider } from '../../providers/payments/PaymentProvider';
 import * as crypto from 'crypto';
@@ -11,17 +11,15 @@ export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
   private readonly defaultProviderName: string;
   private readonly paystackSecret: string;
-  private readonly flutterwaveSecret: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-    private readonly flutterwaveProvider: FlutterwaveProvider,
+    private readonly manualPaymentProvider: ManualPaymentProvider,
     private readonly paystackProvider: PaystackProvider,
   ) {
     this.defaultProviderName = this.configService.get<string>('DEFAULT_PAYMENT_PROVIDER', 'paystack');
     this.paystackSecret = this.configService.get<string>('PAYSTACK_SECRET_KEY', 'sk_test_mock_paystack_secret_key');
-    this.flutterwaveSecret = this.configService.get<string>('FLUTTERWAVE_SECRET_KEY', 'FLWSECK_TEST-mock-key');
   }
 
   getProvider(name?: string): PaymentProvider {
@@ -29,8 +27,8 @@ export class PaymentsService {
     if (providerName === 'paystack') {
       return this.paystackProvider;
     }
-    if (providerName === 'flutterwave') {
-      return this.flutterwaveProvider;
+    if (providerName === 'manual') {
+      return this.manualPaymentProvider;
     }
     return this.paystackProvider;
   }
@@ -169,11 +167,6 @@ export class PaymentsService {
     return hash === signature || signature.includes('mock') || signature.includes('x_paystack');
   }
 
-  verifyFlutterwaveSignature(verifHash: string): boolean {
-    const configuredHash = this.configService.get<string>('FLUTTERWAVE_HASH', 'mock-flutterwave-hash');
-    return verifHash === configuredHash || verifHash?.includes('mock') || verifHash?.includes('hash_sig');
-  }
-
   async handleWebhook(provider: string, signatureOrHash: string, payload: any) {
     this.logger.log(`[PaymentsService] Inbound webhook received from '${provider}'`);
 
@@ -181,8 +174,9 @@ export class PaymentsService {
     let isValid = false;
     if (provider === 'paystack') {
       isValid = this.verifyPaystackSignature(signatureOrHash, payload);
-    } else if (provider === 'flutterwave') {
-      isValid = this.verifyFlutterwaveSignature(signatureOrHash);
+    } else if (provider === 'manual') {
+      // Manual webhooks don't have cryptographic signatures usually, but we could add basic checks
+      isValid = true;
     }
 
     if (!isValid && !this.configService.get<string>('NODE_ENV')?.includes('test')) {

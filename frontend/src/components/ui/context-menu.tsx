@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu";
-import { Check, ChevronRight, Circle } from "lucide-react";
+import { CheckIcon as Check, ChevronRightIcon as ChevronRight, ArrowPathIcon as Circle } from '@heroicons/react/24/outline';
 
 import { cn } from "@/lib/utils";
 

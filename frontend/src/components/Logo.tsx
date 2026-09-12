@@ -5,7 +5,7 @@ interface Props {
   className?: string;
   showWordmark?: boolean;
   tone?: "light" | "dark";
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }
 
 export const Logo = ({ className, showWordmark = true, size = "md" }: Props) => {
@@ -13,12 +13,14 @@ export const Logo = ({ className, showWordmark = true, size = "md" }: Props) => 
   const isDark = theme === "dark";
 
   const heightClasses = {
+    xs: "h-4",
     sm: "h-6",
     md: "h-8",
     lg: "h-11",
   };
 
   const iconSizeClasses = {
+    xs: "h-4 w-4",
     sm: "h-6 w-6",
     md: "h-8 w-8",
     lg: "h-11 w-11",

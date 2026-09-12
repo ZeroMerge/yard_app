@@ -8,7 +8,7 @@ import { activityApi } from "@/api/activity";
 import { Campaign, Payment, CampaignActivity } from "@/api/types";
 import { PageHeader, Stat, StatusPill, Empty } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, ExternalLink, RefreshCw, X, Send, Sparkles } from "lucide-react";
+import { ArrowLeftIcon as ArrowLeft, CheckIcon as Check, ArrowTopRightOnSquareIcon as ExternalLink, ArrowPathIcon as RefreshCw, XMarkIcon as X, PaperAirplaneIcon as Send, SparklesIcon as Sparkles } from '@heroicons/react/24/outline';
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -116,7 +116,7 @@ const CampaignDetail = () => {
   }
 
   if (!campaign) {
-    return <Empty title="Campaign not found" action={<Button onClick={() => navigate("/brand/campaigns")} className="rounded-xl">Back to campaigns</Button>} />;
+    return <Empty title="Campaign not found" action={<Button onClick={() => navigate("/brand/campaigns")} className="rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold h-9 px-4 shadow-xs">Back to campaigns</Button>} />;
   }
 
   const apps = campaign.applications || [];
@@ -124,25 +124,25 @@ const CampaignDetail = () => {
   const totalBudget = Number(campaign.budgetPerCreator || 0) * (campaign.quantity || 1);
 
   return (
-    <div>
+    <div className="space-y-6 pb-16">
       <button
         onClick={() => navigate("/brand/campaigns")}
-        className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 mb-4 font-medium transition-colors"
+        className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 font-medium transition-colors"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to campaigns
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to campaigns
       </button>
 
       <PageHeader
         title={campaign.name}
         subtitle={`${campaign.category.toUpperCase()} • ${campaign.country} • Format: ${campaign.deliverableType}`}
         action={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <StatusPill status={campaign.status} />
             {campaign.status === "draft" && (
               <Button
                 onClick={() => publishMutation.mutate()}
                 disabled={publishMutation.isPending}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl px-5 shadow-sm"
+                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-md px-4 h-9 text-xs shadow-xs"
               >
                 {publishMutation.isPending ? "Publishing..." : "Publish Campaign"}
               </Button>
@@ -152,7 +152,7 @@ const CampaignDetail = () => {
                 variant="ghost"
                 onClick={() => cancelMutation.mutate()}
                 disabled={cancelMutation.isPending}
-                className="rounded-xl text-muted-foreground hover:text-destructive"
+                className="rounded-md text-xs h-9 px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               >
                 Cancel
               </Button>
@@ -161,7 +161,7 @@ const CampaignDetail = () => {
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4">
         <Stat label="Total Budget" value={money(totalBudget, campaign.currency)} />
         <Stat label="Per Creator" value={money(campaign.budgetPerCreator, campaign.currency)} tone="gold" />
         <Stat label="Creator Slots" value={campaign.quantity} />
@@ -169,19 +169,29 @@ const CampaignDetail = () => {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-6 bg-surface-2 dark:bg-surface p-1 rounded-2xl border-0">
-          <TabsTrigger value="overview" className="rounded-xl">Overview & Brief</TabsTrigger>
-          <TabsTrigger value="applicants" className="rounded-xl">Applicants ({apps.length})</TabsTrigger>
-          <TabsTrigger value="deliverables" className="rounded-xl">Deliverables ({deliverables.length})</TabsTrigger>
-          <TabsTrigger value="payments" className="rounded-xl">Payments ({payments.length})</TabsTrigger>
-          <TabsTrigger value="timeline" className="rounded-xl">Activity ({activities.length})</TabsTrigger>
+        <TabsList className="mb-6 bg-surface-2 dark:bg-surface p-1 rounded-md border border-border/40 shadow-2xs h-auto flex flex-wrap gap-1">
+          <TabsTrigger value="overview" className="rounded-sm px-3.5 py-1.5 text-xs font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs">
+            Overview & Brief
+          </TabsTrigger>
+          <TabsTrigger value="applicants" className="rounded-sm px-3.5 py-1.5 text-xs font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs">
+            Applicants ({apps.length})
+          </TabsTrigger>
+          <TabsTrigger value="deliverables" className="rounded-sm px-3.5 py-1.5 text-xs font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs">
+            Deliverables ({deliverables.length})
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="rounded-sm px-3.5 py-1.5 text-xs font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs">
+            Payments ({payments.length})
+          </TabsTrigger>
+          <TabsTrigger value="timeline" className="rounded-sm px-3.5 py-1.5 text-xs font-semibold data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs">
+            Activity ({activities.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-          <div className="cy-card p-8 space-y-5 shadow-sm">
-            <h2 className="font-display font-bold text-lg">Campaign Brief & Objectives</h2>
-            <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{campaign.brief}</p>
-            <div className="pt-5 border-t border-border/30 flex flex-wrap gap-6 text-xs text-muted-foreground font-medium">
+          <div className="bg-card border border-border/60 rounded-md p-5 sm:p-6 shadow-2xs space-y-5">
+            <h2 className="font-display font-bold text-base text-foreground tracking-tight">Campaign Brief & Objectives</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{campaign.brief}</p>
+            <div className="pt-4 border-t border-border/40 flex flex-wrap gap-6 text-xs text-muted-foreground font-medium">
               <span>Goal: <strong className="text-foreground capitalize">{campaign.goal}</strong></span>
               <span>Category: <strong className="text-foreground capitalize">{campaign.category}</strong></span>
               <span>Country: <strong className="text-foreground">{campaign.country}</strong></span>
@@ -193,13 +203,14 @@ const CampaignDetail = () => {
         </TabsContent>
 
         <TabsContent value="applicants">
-          <div className="cy-card p-6 shadow-sm">
-            <div className="mb-4">
-              <h2 className="font-display font-bold text-lg">Creator Applications</h2>
+          <div className="bg-card border border-border/60 rounded-md p-5 sm:p-6 shadow-2xs space-y-4">
+            <div>
+              <h2 className="font-display font-bold text-base text-foreground tracking-tight">Creator Applications</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Review and accept creator pitches for this campaign.</p>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {apps.length === 0 ? (
-                <div className="p-10 text-center text-sm text-muted-foreground">No applications received yet.</div>
+                <div className="p-10 text-center text-xs sm:text-sm text-muted-foreground">No applications received yet.</div>
               ) : (
                 apps.map((a, i) => (
                   <motion.div
@@ -207,26 +218,26 @@ const CampaignDetail = () => {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
-                    className="cy-row flex items-start justify-between gap-4"
+                    className="p-3.5 sm:p-4 rounded-md bg-surface-2/40 border border-border/40 hover:bg-surface-2/70 hover:border-transparent transition-all duration-150 flex flex-col sm:flex-row sm:items-start justify-between gap-4"
                   >
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2.5">
                         <span className="font-bold text-foreground text-sm">{a.creator?.displayName || "Creator"}</span>
                         <StatusPill status={a.status} />
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{a.pitch || "No pitch provided."}</p>
-                      <span className="text-xs text-muted-foreground mt-2 block font-medium">
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 leading-relaxed">{a.pitch || "No pitch provided."}</p>
+                      <span className="text-[11px] text-muted-foreground mt-2 block font-medium">
                         Applied: {new Date(a.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
                     {a.status === "pending" && (
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <Button
                           size="sm"
                           onClick={() => acceptAppMutation.mutate(a.id)}
                           disabled={acceptAppMutation.isPending}
-                          className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl"
+                          className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-md h-8 px-3 text-xs shadow-xs"
                         >
                           <Check className="h-3.5 w-3.5 mr-1" /> Accept
                         </Button>
@@ -235,7 +246,7 @@ const CampaignDetail = () => {
                           variant="ghost"
                           onClick={() => rejectAppMutation.mutate(a.id)}
                           disabled={rejectAppMutation.isPending}
-                          className="rounded-xl hover:bg-rose-500/10 hover:text-rose-600"
+                          className="rounded-md h-8 px-3 text-xs hover:bg-rose-500/10 hover:text-rose-600"
                         >
                           <X className="h-3.5 w-3.5 mr-1" /> Reject
                         </Button>
@@ -249,16 +260,17 @@ const CampaignDetail = () => {
         </TabsContent>
 
         <TabsContent value="deliverables">
-          <div className="cy-card p-6 shadow-sm">
-            <div className="mb-4">
-              <h2 className="font-display font-bold text-lg">Submissions & Review</h2>
+          <div className="bg-card border border-border/60 rounded-md p-5 sm:p-6 shadow-2xs space-y-4">
+            <div>
+              <h2 className="font-display font-bold text-base text-foreground tracking-tight">Submissions & Review</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Evaluate creator submissions and release escrowed payouts.</p>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {deliverables.length === 0 ? (
-                <div className="p-10 text-center text-sm text-muted-foreground">No deliverables submitted yet.</div>
+                <div className="p-10 text-center text-xs sm:text-sm text-muted-foreground">No deliverables submitted yet.</div>
               ) : (
                 deliverables.map((d) => (
-                  <div key={d.id} className="cy-row space-y-3">
+                  <div key={d.id} className="p-4 rounded-md bg-surface-2/40 border border-border/40 hover:bg-surface-2/70 hover:border-transparent transition-all duration-150 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="font-bold text-sm text-foreground">
                         Deliverable Version {d.version} ({d.file?.fileType || "video/mp4"})
@@ -271,7 +283,7 @@ const CampaignDetail = () => {
                         href={d.file.providerUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-sm text-teal-600 dark:text-teal-400 hover:underline font-medium"
+                        className="inline-flex items-center gap-1.5 text-xs text-teal-600 dark:text-teal-400 hover:underline font-semibold"
                       >
                         <ExternalLink className="h-3.5 w-3.5" /> View Uploaded Media
                       </a>
@@ -284,7 +296,7 @@ const CampaignDetail = () => {
                             size="sm"
                             onClick={() => approveDeliverableMutation.mutate(d.id)}
                             disabled={approveDeliverableMutation.isPending}
-                            className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl"
+                            className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-md h-8 px-3.5 text-xs shadow-xs"
                           >
                             <Check className="h-3.5 w-3.5 mr-1.5" /> Approve & Release Payout
                           </Button>
@@ -294,7 +306,7 @@ const CampaignDetail = () => {
                             placeholder="Reason for revision (e.g. adjust lighting, show product close-up)..."
                             value={revisionNote[d.id] || ""}
                             onChange={(e) => setRevisionNote({ ...revisionNote, [d.id]: e.target.value })}
-                            className="text-xs rounded-xl bg-surface-2 dark:bg-surface border-0"
+                            className="text-xs rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 h-8"
                           />
                           <Button
                             size="sm"
@@ -307,7 +319,7 @@ const CampaignDetail = () => {
                               requestRevisionMutation.mutate({ deliverableId: d.id, notes: revisionNote[d.id] });
                             }}
                             disabled={requestRevisionMutation.isPending}
-                            className="rounded-xl"
+                            className="rounded-md h-8 px-3 text-xs border border-border/40 hover:bg-surface-2"
                           >
                             <RefreshCw className="h-3.5 w-3.5 mr-1" /> Request Revision
                           </Button>
@@ -322,24 +334,25 @@ const CampaignDetail = () => {
         </TabsContent>
 
         <TabsContent value="payments">
-          <div className="cy-card p-6 shadow-sm">
-            <div className="mb-4">
-              <h2 className="font-display font-bold text-lg">Payment Transaction Ledger</h2>
+          <div className="bg-card border border-border/60 rounded-md p-5 sm:p-6 shadow-2xs space-y-4">
+            <div>
+              <h2 className="font-display font-bold text-base text-foreground tracking-tight">Payment Transaction Ledger</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Automated payouts triggered upon deliverable approval.</p>
             </div>
             <div className="space-y-2">
               {payments.length === 0 ? (
-                <div className="p-10 text-center text-sm text-muted-foreground">
+                <div className="p-10 text-center text-xs sm:text-sm text-muted-foreground">
                   No payments initiated yet. Payouts trigger automatically upon deliverable approval.
                 </div>
               ) : (
                 payments.map((p) => (
-                  <div key={p.id} className="cy-row flex items-center justify-between text-sm">
+                  <div key={p.id} className="p-3.5 sm:p-4 rounded-md bg-surface-2/40 border border-border/40 hover:bg-surface-2/70 hover:border-transparent transition-all duration-150 flex items-center justify-between text-xs sm:text-sm">
                     <div>
-                      <span className="font-bold uppercase tracking-wide text-xs text-teal-600 dark:text-teal-400">[{p.status}]</span>
-                      <span className="ml-2.5 font-extrabold text-foreground">{money(p.amount, p.currency)}</span>
+                      <span className="font-mono font-bold uppercase tracking-wider text-[11px] text-teal-600 dark:text-teal-400">[{p.status}]</span>
+                      <span className="ml-2.5 font-bold font-numeric text-foreground">{money(p.amount, p.currency)}</span>
                       <span className="text-xs text-muted-foreground ml-2">via {p.provider} {p.providerRef ? `(Ref: ${p.providerRef})` : ''}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleTimeString()}</span>
+                    <span className="text-xs text-muted-foreground font-mono">{new Date(p.createdAt).toLocaleTimeString()}</span>
                   </div>
                 ))
               )}
@@ -348,21 +361,25 @@ const CampaignDetail = () => {
         </TabsContent>
 
         <TabsContent value="timeline">
-          <div className="cy-card p-6 space-y-4 shadow-sm">
-            <h2 className="font-display font-bold text-lg">Activity Timeline</h2>
-            <div className="space-y-3">
-              {activities.map((act) => (
-                <div key={act.id} className="cy-row py-2.5">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-bold text-foreground uppercase tracking-wider">{act.eventType}</span>
-                    <span>{new Date(act.createdAt).toLocaleString()}</span>
+          <div className="bg-card border border-border/60 rounded-md p-5 sm:p-6 shadow-2xs space-y-4">
+            <h2 className="font-display font-bold text-base text-foreground tracking-tight">Activity Timeline</h2>
+            <div className="space-y-2.5">
+              {activities.length === 0 ? (
+                <div className="p-8 text-center text-xs sm:text-sm text-muted-foreground">No timeline activity yet.</div>
+              ) : (
+                activities.map((act) => (
+                  <div key={act.id} className="p-3.5 rounded-md bg-surface-2/40 border border-border/40 hover:bg-surface-2/70 hover:border-transparent transition-all duration-150">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="font-mono font-bold text-[11px] text-foreground uppercase tracking-wider">{act.eventType}</span>
+                      <span className="text-[11px] font-mono">{new Date(act.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p className="text-xs sm:text-sm mt-1.5 text-foreground leading-relaxed">{act.body}</p>
                   </div>
-                  <p className="text-sm mt-1 text-foreground leading-relaxed">{act.body}</p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
-            <div className="pt-4 border-t border-border/30 flex gap-2">
+            <div className="pt-4 border-t border-border/40 flex gap-2">
               <Input
                 placeholder="Post a comment or update to the campaign timeline..."
                 value={commentText}
@@ -370,12 +387,13 @@ const CampaignDetail = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && commentText) commentMutation.mutate(commentText);
                 }}
-                className="rounded-xl bg-surface-2 dark:bg-surface border-0"
-              />
+                className="rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 h-9 text-xs sm:text-sm focus:ring-teal-500/20"
+              >
+              </Input>
               <Button
                 onClick={() => commentText && commentMutation.mutate(commentText)}
                 disabled={commentMutation.isPending || !commentText}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl px-5"
+                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-md px-4 h-9 text-xs shadow-xs shrink-0"
               >
                 Post
               </Button>

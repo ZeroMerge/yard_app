@@ -41,10 +41,29 @@ export class CampaignsService {
       });
     }
 
-    // Creators see open campaigns
+    // Creators see open campaigns plus any campaigns they applied to (with applications, deliverables, payments)
     return this.prisma.campaign.findMany({
-      where: { status: { in: ['open', 'in_progress'] } },
-      include: { organization: true, platforms: { include: { platform: true } } },
+      where: {
+        OR: [
+          { status: 'open' },
+          { applications: { some: { creator: { userId } } } },
+        ],
+      },
+      include: {
+        organization: true,
+        platforms: { include: { platform: true } },
+        applications: {
+          where: { creator: { userId } },
+          include: { deliverables: true, payments: true },
+        },
+        deliverables: {
+          where: { application: { creator: { userId } } },
+          include: { file: true },
+        },
+        payments: {
+          where: { application: { creator: { userId } } },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

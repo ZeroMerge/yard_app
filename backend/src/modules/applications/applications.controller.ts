@@ -40,4 +40,18 @@ export class ApplicationsController {
   async withdraw(@Param('id') id: string, @CurrentUser() user: UserPayload) {
     return this.applicationsService.withdraw(id, user.creatorId, user.id);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('creator')
+  @Patch('applications/:id/accept-invitation')
+  async acceptInvitation(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    return this.applicationsService.creatorAcceptInvitation(id, user.creatorId, user.id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('creator')
+  @Patch('applications/:id/decline-invitation')
+  async declineInvitation(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    return this.applicationsService.creatorDeclineInvitation(id, user.creatorId, user.id);
+  }
 }

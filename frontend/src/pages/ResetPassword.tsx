@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { updatePassword, dashboardPathFor, getCurrentUser } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { ArrowPathIcon as Loader2 } from '@heroicons/react/24/outline';
 
 const ResetPassword = () => {
   const navigate = useNavigate();

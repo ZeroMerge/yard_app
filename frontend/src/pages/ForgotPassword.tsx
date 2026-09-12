@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { requestPasswordReset } from "@/lib/auth";
 import { toast } from "sonner";
-import { Loader2, MailCheck, ArrowLeft } from "lucide-react";
+import { ArrowPathIcon as Loader2, EnvelopeOpenIcon as MailCheck, ArrowLeftIcon as ArrowLeft } from '@heroicons/react/24/outline';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");

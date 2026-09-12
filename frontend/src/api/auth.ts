@@ -14,7 +14,8 @@ export interface LoginPayload {
 }
 
 export interface AuthResponse {
-  token: string;
+  token?: string;
+  accessToken?: string;
   user: User & { organizationId?: string; creatorId?: string };
 }
 
@@ -24,10 +25,11 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    if (res.token) {
-      setAuthToken(res.token);
+    const token = res.token || res.accessToken;
+    if (token) {
+      setAuthToken(token);
     }
-    return res;
+    return { ...res, token: token || '' };
   },
 
   login: async (payload: LoginPayload): Promise<AuthResponse> => {
@@ -35,10 +37,11 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    if (res.token) {
-      setAuthToken(res.token);
+    const token = res.token || res.accessToken;
+    if (token) {
+      setAuthToken(token);
     }
-    return res;
+    return { ...res, token: token || '' };
   },
 
   getMe: async (): Promise<User & { organizationId?: string; creatorId?: string }> => {

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { OTPInput, OTPInputContext } from "input-otp";
-import { Dot } from "lucide-react";
+import { StopIcon as Dot } from '@heroicons/react/24/outline';
 
 import { cn } from "@/lib/utils";
 

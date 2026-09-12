@@ -30,4 +30,16 @@ export const creatorsApi = {
   getMe: async (): Promise<Creator> => {
     return apiClient<Creator>('/creators/me');
   },
+
+  getHome: async (): Promise<any> => {
+    return apiClient<any>('/home');
+  },
+
+  acceptInvitation: async (applicationId: string): Promise<any> => {
+    return apiClient<any>(`/applications/${applicationId}/accept-invitation`, { method: 'PATCH' });
+  },
+
+  declineInvitation: async (applicationId: string): Promise<any> => {
+    return apiClient<any>(`/applications/${applicationId}/decline-invitation`, { method: 'PATCH' });
+  },
 };

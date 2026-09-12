@@ -1,7 +1,7 @@
 import { usePwaInstall } from '@/lib/pwa';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, X } from 'lucide-react';
+import { ArrowDownTrayIcon as Download, XMarkIcon as X } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const PwaInstallPrompt = () => {

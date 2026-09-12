@@ -1,6 +1,7 @@
 import { Controller, Get, Patch, Post, Query, Param, Body, UseGuards } from '@nestjs/common';
 import { CreatorsService, CreatorFilterDto } from './creators.service';
 import { IngestionService } from './ingestion.service';
+import { SocialAuthService } from '../../creators/social/SocialAuthService';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -11,11 +12,19 @@ export class CreatorsController {
   constructor(
     private readonly creatorsService: CreatorsService,
     private readonly ingestionService: IngestionService,
+    private readonly socialAuthService: SocialAuthService,
   ) {}
 
   @Get()
   async findAll(@Query() filter: CreatorFilterDto) {
     return this.creatorsService.findAll(filter);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('creator')
+  @Get('home')
+  async getHome(@CurrentUser() user: UserPayload) {
+    return this.creatorsService.getHomeState(user.id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -30,6 +39,33 @@ export class CreatorsController {
   @Patch('me')
   async updateMe(@CurrentUser() user: UserPayload, @Body() data: any) {
     return this.creatorsService.updateProfile(user.id, data);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('creator')
+  @Post('me/social/:platform')
+  async connectSocialPlatform(
+    @CurrentUser() user: UserPayload,
+    @Param('platform') platform: string,
+    @Body('code') code: string,
+  ) {
+    let profile;
+    if (platform === 'instagram' || platform === 'facebook') {
+      profile = await this.socialAuthService.fetchMetaProfile(code);
+    } else if (platform === 'youtube') {
+      profile = await this.socialAuthService.fetchYoutubeProfile(code);
+    } else if (platform === 'tiktok') {
+      profile = await this.socialAuthService.fetchTiktokProfile(code);
+    } else {
+      throw new Error('Unsupported platform');
+    }
+    
+    // In a full implementation, you would save `profile` to `creator_social_accounts`.
+    // We are returning it directly for V1 fallback testing.
+    return {
+      message: 'Social profile connected (Fallback mode)',
+      profile,
+    };
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

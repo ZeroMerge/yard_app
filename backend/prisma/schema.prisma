@@ -8,33 +8,31 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String?  @map("password_hash")
-  role         String   // 'brand', 'creator', 'admin'
-  status       String   @default("active") // 'active', 'suspended'
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  organizationMembers OrganizationMember[]
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  passwordHash        String?              @map("password_hash")
+  role                String
+  status              String               @default("active")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  auditLogs           AuditLog[]
+  campaignActivities  CampaignActivity[]
   creators            Creator[]
   filesUploaded       File[]
-  campaignActivities  CampaignActivity[]
-  auditLogs           AuditLog[]
+  organizationMembers OrganizationMember[]
 
   @@index([role, status])
   @@map("users")
 }
 
 model Organization {
-  id        String   @id @default(uuid())
+  id        String               @id @default(uuid())
   name      String
   website   String?
   industry  String?
-  createdAt DateTime @default(now()) @map("created_at")
-
-  members   OrganizationMember[]
+  createdAt DateTime             @default(now()) @map("created_at")
   campaigns Campaign[]
+  members   OrganizationMember[]
 
   @@map("organizations")
 }
@@ -43,10 +41,9 @@ model OrganizationMember {
   id             String       @id @default(uuid())
   organizationId String       @map("organization_id")
   userId         String       @map("user_id")
-  role           String       @default("member") // 'owner', 'member'
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("member")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, userId])
   @@index([userId])
@@ -55,27 +52,26 @@ model OrganizationMember {
 }
 
 model Creator {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  displayName     String   @map("display_name")
-  bio             String?
-  profileImageUrl String?  @map("profile_image_url")
-  verified        Boolean  @default(false)
-  payoutAccount   Json?    @map("payout_account")
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  socialAccounts         CreatorSocialAccount[]
-  categories             CreatorCategory[]
-  languages              CreatorLanguage[]
-  locations              CreatorLocation[]
-  rates                  CreatorRate[]
-  portfolioItems         CreatorPortfolio[]
-  applications           Application[]
-  stats                  CreatorStats?
+  id                    String                 @id @default(uuid())
+  userId                String                 @map("user_id")
+  displayName           String                 @map("display_name")
+  bio                   String?
+  profileImageUrl       String?                @map("profile_image_url")
+  verified              Boolean                @default(false)
+  payoutAccount         Json?                  @map("payout_account")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  applications          Application[]
+  categories            CreatorCategory[]
+  languages             CreatorLanguage[]
+  locations             CreatorLocation[]
+  portfolioItems        CreatorPortfolio[]
+  rates                 CreatorRate[]
+  scores                CreatorScore[]
+  socialAccounts        CreatorSocialAccount[]
+  stats                 CreatorStats?
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scrapeJobs            ScrapeJob[]
   socialMetricSnapshots SocialMetricSnapshot[]
-  scores                 CreatorScore[]
-  scrapeJobs             ScrapeJob[]
 
   @@index([userId])
   @@index([verified])
@@ -83,16 +79,15 @@ model Creator {
 }
 
 model CreatorSocialAccount {
-  id              String    @id @default(uuid())
-  creatorId       String    @map("creator_id")
-  platform        String
-  handle          String
-  profileUrl      String    @map("profile_url")
-  oauthToken      String?   @map("oauth_token")       // Encrypted OAuth access token
-  refreshToken    String?   @map("refresh_token")     // Encrypted OAuth refresh token
-  tokenExpiresAt  DateTime? @map("token_expires_at")  // When the access token expires
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  id             String    @id @default(uuid())
+  creatorId      String    @map("creator_id")
+  platform       String
+  handle         String
+  profileUrl     String    @map("profile_url")
+  oauthToken     String?   @map("oauth_token")
+  refreshToken   String?   @map("refresh_token")
+  tokenExpiresAt DateTime? @map("token_expires_at")
+  creator        Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@unique([creatorId, platform])
   @@index([platform, handle])
@@ -100,19 +95,17 @@ model CreatorSocialAccount {
 }
 
 model Platform {
-  id   String @id @default(uuid())
-  name String @unique // 'instagram', 'tiktok', 'youtube', 'facebook', 'x'
-
+  id                String             @id @default(uuid())
+  name              String             @unique
   campaignPlatforms CampaignPlatform[]
 
   @@map("platforms")
 }
 
 model CreatorCategory {
-  creatorId String @map("creator_id")
-  category  String // beauty, fashion, food, tech, lifestyle, finance, fitness, entertainment, other
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId String  @map("creator_id")
+  category  String
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@id([creatorId, category])
   @@index([category])
@@ -120,10 +113,9 @@ model CreatorCategory {
 }
 
 model CreatorLanguage {
-  creatorId String @map("creator_id")
+  creatorId String  @map("creator_id")
   language  String
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@id([creatorId, language])
   @@index([language])
@@ -135,8 +127,7 @@ model CreatorLocation {
   creatorId String  @map("creator_id")
   country   String
   city      String?
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@index([creatorId])
   @@index([country, city])
@@ -149,8 +140,7 @@ model CreatorRate {
   deliverableType String  @map("deliverable_type")
   amount          Decimal @db.Decimal(12, 2)
   currency        String  @default("NGN")
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator         Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@index([creatorId, deliverableType])
   @@map("creator_rates")
@@ -162,41 +152,39 @@ model CreatorPortfolio {
   fileId    String?  @map("file_id")
   title     String?
   createdAt DateTime @default(now()) @map("created_at")
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  file    File?   @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  file      File?    @relation(fields: [fileId], references: [id])
 
   @@index([creatorId])
   @@map("creator_portfolio")
 }
 
 model Campaign {
-  id                  String    @id @default(uuid())
-  organizationId      String    @map("organization_id")
+  id                  String                @id @default(uuid())
+  organizationId      String                @map("organization_id")
   name                String
-  goal                String    // product_awareness, content_creation, product_review, sales_promotion, event_promotion
+  goal                String
   category            String
   country             String
   city                String?
   brief               String
-  deliverableType     String    @map("deliverable_type")
+  deliverableType     String                @map("deliverable_type")
   quantity            Int
-  budgetPerCreator    Decimal   @map("budget_per_creator") @db.Decimal(12, 2)
-  currency            String    @default("NGN")
-  status              String    @default("draft") // draft, open, in_progress, review, completed, cancelled, closed
-  applicationDeadline DateTime? @map("application_deadline")
-  deliveryDeadline    DateTime? @map("delivery_deadline")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
-
-  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  platforms    CampaignPlatform[]
-  requirements CampaignRequirement[]
-  applications Application[]
-  deliverables Deliverable[]
-  payments     Payment[]
-  activities   CampaignActivity[]
-  files        File[]
+  budgetPerCreator    Decimal               @map("budget_per_creator") @db.Decimal(12, 2)
+  currency            String                @default("NGN")
+  status              String                @default("draft")
+  applicationDeadline DateTime?             @map("application_deadline")
+  deliveryDeadline    DateTime?             @map("delivery_deadline")
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
+  applications        Application[]
+  activities          CampaignActivity[]
+  platforms           CampaignPlatform[]
+  requirements        CampaignRequirement[]
+  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deliverables        Deliverable[]
+  files               File[]
+  payments            Payment[]
 
   @@index([organizationId])
   @@index([status])
@@ -206,40 +194,37 @@ model Campaign {
 }
 
 model CampaignPlatform {
-  campaignId String @map("campaign_id")
-  platformId String @map("platform_id")
-
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  platform Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  campaignId String   @map("campaign_id")
+  platformId String   @map("platform_id")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
 
   @@id([campaignId, platformId])
   @@map("campaign_platforms")
 }
 
 model CampaignRequirement {
-  id           String  @id @default(uuid())
-  campaignId   String  @map("campaign_id")
-  minFollowers Int?    @map("min_followers")
+  id           String   @id @default(uuid())
+  campaignId   String   @map("campaign_id")
+  minFollowers Int?     @map("min_followers")
   category     String?
   country      String?
   language     String?
-
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@index([campaignId])
   @@map("campaign_requirements")
 }
 
 model Application {
-  id         String    @id @default(uuid())
-  campaignId String    @map("campaign_id")
-  creatorId  String    @map("creator_id")
-  source     String    @default("applied") // applied, invited
-  status     String    @default("pending") // pending, accepted, rejected, withdrawn
-  pitch      String?
-  createdAt  DateTime  @default(now()) @map("created_at")
-  decidedAt  DateTime? @map("decided_at")
-
+  id           String        @id @default(uuid())
+  campaignId   String        @map("campaign_id")
+  creatorId    String        @map("creator_id")
+  source       String        @default("applied")
+  status       String        @default("pending")
+  pitch        String?
+  createdAt    DateTime      @default(now()) @map("created_at")
+  decidedAt    DateTime?     @map("decided_at")
   campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   creator      Creator       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   deliverables Deliverable[]
@@ -248,25 +233,26 @@ model Application {
   @@unique([campaignId, creatorId])
   @@index([campaignId, status])
   @@index([creatorId, status])
+  @@index([creatorId, status, decidedAt])
   @@map("applications")
 }
 
 model File {
-  id             String   @id @default(uuid())
-  campaignId     String?  @map("campaign_id")
-  uploadedBy     String   @map("uploaded_by")
-  provider       String   // google_drive, cloudinary, s3, local
-  providerFileId String   @map("provider_file_id")
-  providerUrl    String?  @map("provider_url")
-  fileType       String?  @map("file_type")
-  fileSize       BigInt?  @map("file_size")
-  status         String   @default("active") // active, deleted
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  campaign          Campaign?          @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  uploader          User               @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
-  deliverables      Deliverable[]
+  id                String             @id @default(uuid())
+  campaignId        String?            @map("campaign_id")
+  uploadedBy        String             @map("uploaded_by")
+  provider          String
+  providerFileId    String             @map("provider_file_id")
+  providerUrl       String?            @map("provider_url")
+  fileType          String?            @map("file_type")
+  fileSize          BigInt?            @map("file_size")
+  status            String             @default("active")
+  createdAt         DateTime           @default(now()) @map("created_at")
   creatorPortfolios CreatorPortfolio[]
+  deliverables      Deliverable[]
+  campaign          Campaign?          @relation(fields: [campaignId], references: [id])
+  uploader          User               @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  paymentReceipts   Payment[]
 
   @@index([campaignId])
   @@index([uploadedBy])
@@ -275,19 +261,18 @@ model File {
 }
 
 model Deliverable {
-  id            String    @id @default(uuid())
-  campaignId    String    @map("campaign_id")
-  applicationId String    @map("application_id")
-  fileId        String    @map("file_id")
-  status        String    @default("submitted") // submitted, revision_requested, approved, rejected
-  revisionNotes String?   @map("revision_notes")
-  version       Int       @default(1)
-  submittedAt   DateTime  @default(now()) @map("submitted_at")
-  reviewedAt    DateTime? @map("reviewed_at")
-
-  campaign    Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  file        File        @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  id            String      @id @default(uuid())
+  campaignId    String      @map("campaign_id")
+  applicationId String      @map("application_id")
+  fileId        String      @map("file_id")
+  status        String      @default("submitted")
+  revisionNotes String?     @map("revision_notes")
+  version       Int         @default(1)
+  submittedAt   DateTime    @default(now()) @map("submitted_at")
+  reviewedAt    DateTime?   @map("reviewed_at")
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  campaign      Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  file          File        @relation(fields: [fileId], references: [id], onDelete: Cascade)
 
   @@index([campaignId])
   @@index([applicationId])
@@ -296,21 +281,22 @@ model Deliverable {
 }
 
 model Payment {
-  id              String   @id @default(uuid())
-  campaignId      String   @map("campaign_id")
-  applicationId   String   @map("application_id")
-  amount          Decimal  @db.Decimal(12, 2)
-  currency        String   @default("NGN")
-  provider        String   // flutterwave, paystack
-  providerRef     String?  @map("provider_ref")
-  status          String   @default("unpaid") // unpaid, payment_initiated, payment_confirmed, creator_payout_pending, paid, failed, retry
-  parentPaymentId String?  @map("parent_payment_id")
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  campaign      Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  parentPayment Payment?    @relation("PaymentChain", fields: [parentPaymentId], references: [id], onDelete: SetNull)
-  childPayments Payment[]   @relation("PaymentChain")
+  id              String      @id @default(uuid())
+  campaignId      String      @map("campaign_id")
+  applicationId   String      @map("application_id")
+  amount          Decimal     @db.Decimal(12, 2)
+  currency        String      @default("NGN")
+  provider        String
+  providerRef     String?     @map("provider_ref")
+  receiptFileId   String?     @map("receipt_file_id")
+  status          String      @default("unpaid")
+  parentPaymentId String?     @map("parent_payment_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  campaign        Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  parentPayment   Payment?    @relation("PaymentChain", fields: [parentPaymentId], references: [id])
+  childPayments   Payment[]   @relation("PaymentChain")
+  receiptFile     File?       @relation(fields: [receiptFileId], references: [id])
 
   @@index([campaignId])
   @@index([applicationId])
@@ -322,7 +308,7 @@ model Payment {
 
 model ProviderEvent {
   id          String    @id @default(uuid())
-  provider    String    // paystack, flutterwave
+  provider    String
   eventType   String    @map("event_type")
   payload     Json
   processed   Boolean   @default(false)
@@ -347,9 +333,8 @@ model CampaignActivity {
   body       String?
   metadata   Json?
   createdAt  DateTime @default(now()) @map("created_at")
-
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  actor    User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actor      User?    @relation(fields: [actorId], references: [id])
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@index([campaignId, createdAt])
   @@index([actorId])
@@ -357,17 +342,16 @@ model CampaignActivity {
 }
 
 model CreatorStats {
-  creatorId           String   @id @map("creator_id")
-  campaignsCompleted  Int      @default(0) @map("campaigns_completed")
-  campaignsCancelled  Int      @default(0) @map("campaigns_cancelled")
-  onTimeDeliveries    Int      @default(0) @map("on_time_deliveries")
-  lateDeliveries      Int      @default(0) @map("late_deliveries")
+  creatorId          String   @id @map("creator_id")
+  campaignsCompleted Int      @default(0) @map("campaigns_completed")
+  campaignsCancelled Int      @default(0) @map("campaigns_cancelled")
+  onTimeDeliveries   Int      @default(0) @map("on_time_deliveries")
+  lateDeliveries     Int      @default(0) @map("late_deliveries")
   revisionsRequested Int      @default(0) @map("revisions_requested")
-  disputes            Int      @default(0)
-  repeatHires         Int      @default(0) @map("repeat_hires")
-  updatedAt           DateTime @updatedAt @map("updated_at")
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  disputes           Int      @default(0)
+  repeatHires        Int      @default(0) @map("repeat_hires")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  creator            Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@map("creator_stats")
 }
@@ -381,9 +365,8 @@ model SocialMetricSnapshot {
   posts          Int?
   engagementRate Decimal? @map("engagement_rate") @db.Decimal(5, 2)
   capturedAt     DateTime @map("captured_at")
-  source         String   // apify, api, manual
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  source         String
+  creator        Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@index([creatorId, platform, capturedAt])
   @@map("social_metric_snapshot")
@@ -395,8 +378,7 @@ model CreatorScore {
   score        Decimal? @db.Decimal(5, 2)
   scoreVersion String   @map("score_version")
   calculatedAt DateTime @default(now()) @map("calculated_at")
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator      Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@index([creatorId, calculatedAt])
   @@map("creator_score")
@@ -407,14 +389,13 @@ model ScrapeJob {
   creatorId   String    @map("creator_id")
   platform    String
   jobType     String    @map("job_type")
-  status      String    @default("queued") // queued, running, completed, failed
+  status      String    @default("queued")
   retryCount  Int       @default(0) @map("retry_count")
   maxRetries  Int       @default(3) @map("max_retries")
   errorLog    String?   @map("error_log")
   createdAt   DateTime  @default(now()) @map("created_at")
   completedAt DateTime? @map("completed_at")
-
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator     Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@index([creatorId, status])
   @@index([status, createdAt])
@@ -429,8 +410,7 @@ model AuditLog {
   targetId   String   @map("target_id")
   metadata   Json?
   createdAt  DateTime @default(now()) @map("created_at")
-
-  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actor      User?    @relation(fields: [actorId], references: [id])
 
   @@index([targetType, targetId])
   @@index([actorId, createdAt])

@@ -1,4 +1,4 @@
-import { GripVertical } from "lucide-react";
+import { Bars3Icon as GripVertical } from '@heroicons/react/24/outline';
 import * as ResizablePrimitive from "react-resizable-panels";
 
 import { cn } from "@/lib/utils";

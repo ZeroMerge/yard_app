@@ -12,8 +12,12 @@ import { ActivityModule } from './modules/activity/activity.module';
 import { FilesModule } from './modules/files/files.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { JobsModule } from './modules/jobs/jobs.module';
-import { GoogleDriveProvider } from './providers/files/GoogleDriveProvider';
+import { CloudinaryProvider } from './providers/files/CloudinaryProvider';
+import { EvolutionApiProvider } from './providers/notifications/EvolutionApiProvider';
 import { ApifyProvider } from './providers/analytics/ApifyProvider';
+import { SocialAuthService } from './creators/social/SocialAuthService';
+import { AdminModule } from './modules/admin/admin.module';
+import { HomeModule } from './modules/home/home.module';
 
 @Global()
 @Module({
@@ -29,16 +33,22 @@ import { ApifyProvider } from './providers/analytics/ApifyProvider';
     FilesModule,
     AuditModule,
     JobsModule,
+    AdminModule,
+    HomeModule,
   ],
   controllers: [AppController],
   providers: [
     PrismaService,
-    GoogleDriveProvider,
+    CloudinaryProvider,
+    EvolutionApiProvider,
+    SocialAuthService,
     ApifyProvider,
   ],
   exports: [
     PrismaService,
-    GoogleDriveProvider,
+    CloudinaryProvider,
+    EvolutionApiProvider,
+    SocialAuthService,
     ApifyProvider,
   ],
 })

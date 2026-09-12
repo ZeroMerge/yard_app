@@ -8,7 +8,7 @@ import { useState } from "react";
 import { loadDB, saveDB, uid } from "@/lib/mockData";
 import { newMeetLink } from "@/lib/meetings";
 import { pushActivity } from "@/lib/activity";
-import { Calendar as CalIcon, Video, Plus } from "lucide-react";
+import { CalendarIcon as CalIcon, VideoCameraIcon as Video, PlusIcon as Plus } from '@heroicons/react/24/outline';
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -56,44 +56,46 @@ export const MeetingScheduler = ({ campaignId, counterpartyIds }: Props) => {
   };
 
   return (
-    <div className="cy-card">
-      <div className="p-4 border-b border-border flex items-center justify-between">
+    <div className="bg-card border border-border/60 rounded-md shadow-2xs overflow-hidden">
+      <div className="p-4 sm:p-5 border-b border-border/40 flex items-center justify-between">
         <div>
-          <h3 className="font-display font-semibold">Meetings</h3>
-          <p className="text-xs text-muted-foreground">Schedule and track all calls for this campaign.</p>
+          <h3 className="font-display font-bold text-base text-foreground tracking-tight">Meetings</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Schedule and track all calls for this campaign.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90"><Plus className="h-3.5 w-3.5 mr-1" /> Schedule</Button>
+            <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white rounded-md text-xs font-semibold h-8 px-3 shadow-xs">
+              <Plus className="h-3.5 w-3.5 mr-1" /> Schedule
+            </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Schedule a meeting</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <div className="space-y-1"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+          <DialogContent className="rounded-md border border-border/60 bg-card p-6 shadow-xl max-w-md">
+            <DialogHeader><DialogTitle className="font-display font-bold text-base">Schedule a meeting</DialogTitle></DialogHeader>
+            <div className="space-y-3 py-2">
+              <div className="space-y-1.5"><Label className="text-xs font-semibold">Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 text-xs sm:text-sm h-10" /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label>Date</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-                <div className="space-y-1"><Label>Time</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
+                <div className="space-y-1.5"><Label className="text-xs font-semibold">Date</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 text-xs sm:text-sm h-10" /></div>
+                <div className="space-y-1.5"><Label className="text-xs font-semibold">Time</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 text-xs sm:text-sm h-10" /></div>
               </div>
-              <div className="space-y-1"><Label>Duration (minutes)</Label><Input type="number" min={15} step={15} value={duration} onChange={(e) => setDuration(Number(e.target.value))} /></div>
-              <div className="text-xs text-muted-foreground">A Google Meet link will be generated automatically.</div>
+              <div className="space-y-1.5"><Label className="text-xs font-semibold">Duration (minutes)</Label><Input type="number" min={15} step={15} value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="rounded-md bg-surface-2/60 dark:bg-surface border border-border/40 text-xs sm:text-sm h-10" /></div>
+              <div className="text-[11px] text-muted-foreground">A Google Meet link will be generated automatically.</div>
             </div>
-            <DialogFooter><Button onClick={schedule} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">Schedule</Button></DialogFooter>
+            <DialogFooter><Button onClick={schedule} className="bg-teal-600 hover:bg-teal-700 text-white rounded-md text-xs font-semibold h-9 px-4">Schedule Call</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
-      <div className="divide-y divide-border">
-        {meetings.length === 0 && <div className="p-6 text-center text-sm text-muted-foreground">No meetings yet.</div>}
+      <div className="divide-y divide-border/30">
+        {meetings.length === 0 && <div className="p-8 text-center text-xs sm:text-sm text-muted-foreground">No meetings scheduled yet.</div>}
         {meetings.map((m, i) => {
           const dt = new Date(m.startsAt);
           const upcoming = dt.getTime() > Date.now();
           return (
-            <motion.div key={m.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center"><CalIcon className="h-4 w-4" /></div>
+            <motion.div key={m.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} className="p-3.5 sm:p-4 flex items-start gap-3 hover:bg-surface-2/50 transition-colors">
+              <div className="h-9 w-9 rounded-md bg-teal-600/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 grid place-items-center shrink-0"><CalIcon className="h-4 w-4" /></div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium">{m.title}</div>
-                <div className="text-xs text-muted-foreground">{dt.toLocaleString()} · {m.durationMin}min · {upcoming ? "Upcoming" : "Past"}</div>
-                <a href={m.meetLink} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                  <Video className="h-3 w-3" /> {m.meetLink}
+                <div className="font-bold text-sm text-foreground">{m.title}</div>
+                <div className="text-xs text-muted-foreground mt-0.5"><span className="font-mono">{dt.toLocaleString()}</span> · {m.durationMin}min · <span className="font-semibold text-foreground">{upcoming ? "Upcoming" : "Past"}</span></div>
+                <a href={m.meetLink} target="_blank" rel="noreferrer" className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-teal-600 dark:text-teal-400 hover:underline font-semibold">
+                  <Video className="h-3.5 w-3.5" /> {m.meetLink}
                 </a>
               </div>
             </motion.div>

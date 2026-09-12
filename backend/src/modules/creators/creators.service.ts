@@ -108,6 +108,124 @@ export class CreatorsService {
     });
   }
 
+  async getHomeState(userId: string) {
+    const creator = await this.prisma.creator.findFirst({
+      where: { userId },
+      include: {
+        socialAccounts: true,
+        rates: true,
+        applications: {
+          include: {
+            campaign: true,
+            deliverables: true,
+            payments: true,
+          }
+        }
+      },
+    });
+
+    if (!creator) {
+      throw new NotFoundException(`Creator profile for user ${userId} not found`);
+    }
+
+    // Determine Profile Completeness
+    const missingFields: string[] = [];
+    if (!creator.bio) missingFields.push('bio');
+    if (!creator.socialAccounts || creator.socialAccounts.length === 0) missingFields.push('socialAccounts');
+    if (!creator.rates || creator.rates.length === 0) missingFields.push('rates');
+    
+    const isProfileReady = missingFields.length === 0;
+
+    // Categorize Urgent Actions and Active Work
+    const urgentActions = [];
+    const activeWork = [];
+    
+    const now = new Date();
+
+    for (const app of creator.applications) {
+      const camp = app.campaign;
+
+      // 1. Invitations
+      if (app.source === 'invited' && app.status === 'pending') {
+        urgentActions.push({
+          type: 'INVITATION',
+          campaignName: camp.name,
+          applicationId: app.id,
+          campaignId: camp.id
+        });
+      }
+
+      // 2. Accepted campaigns (Active Work)
+      if (app.status === 'accepted') {
+        const deliverables = app.deliverables;
+        let workStatus = 'ACCEPTED';
+
+        if (deliverables.length > 0) {
+          const d = deliverables[0]; // Simplification for MVP (1 deliverable)
+          
+          if (d.status === 'revision_requested') {
+            urgentActions.push({
+              type: 'REVISION_REQUESTED',
+              campaignName: camp.name,
+              deliverableId: d.id,
+              notes: d.revisionNotes
+            });
+            workStatus = 'REVISION_REQUESTED';
+          } else if (d.status === 'submitted') {
+            workStatus = 'SUBMITTED_UNDER_REVIEW';
+          } else if (d.status === 'approved') {
+             const payment = app.payments[0];
+             if (payment && payment.status === 'paid') {
+               workStatus = 'PAYMENT_COMPLETED';
+             } else {
+               workStatus = 'APPROVED_PENDING_PAYMENT';
+             }
+          }
+        } else {
+          // No deliverable submitted yet. Check deadline.
+          if (camp.deliveryDeadline) {
+             const daysLeft = (camp.deliveryDeadline.getTime() - now.getTime()) / (1000 * 3600 * 24);
+             if (daysLeft <= 3 && daysLeft >= 0) {
+                urgentActions.push({
+                  type: 'DELIVERABLE_DUE_SOON',
+                  campaignName: camp.name,
+                  dueDate: camp.deliveryDeadline,
+                  applicationId: app.id
+                });
+             } else if (daysLeft < 0) {
+                urgentActions.push({
+                  type: 'DELIVERABLE_OVERDUE',
+                  campaignName: camp.name,
+                  dueDate: camp.deliveryDeadline,
+                  applicationId: app.id
+                });
+             }
+          }
+        }
+
+        // Only add to active work if not fully closed
+        if (workStatus !== 'PAYMENT_COMPLETED' && camp.status !== 'closed') {
+          activeWork.push({
+            campaignName: camp.name,
+            campaignId: camp.id,
+            applicationId: app.id,
+            status: workStatus,
+          });
+        }
+      }
+    }
+
+    return {
+      profileCompletion: {
+        isReady: isProfileReady,
+        missingFields,
+      },
+      urgentActions,
+      activeWork,
+      opportunities: [], // Future: fetch suggested campaigns
+    };
+  }
+
   async verifyCreator(id: string, verified: boolean, adminUserId: string, reason?: string) {
     const updated = await this.prisma.creator.update({
       where: { id },

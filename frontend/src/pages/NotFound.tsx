@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeftIcon as ArrowLeft, HomeIcon as Home } from '@heroicons/react/24/outline';
 import { motion } from "framer-motion";
 
 const NotFound = () => {

@@ -12,8 +12,9 @@ import Signup from "./pages/Signup.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import Activity from "./pages/Activity.tsx";
+import Settings from "./pages/Settings.tsx";
 import { AppShell, type NavItem } from "./components/AppShell.tsx";
-import { LayoutDashboard, Megaphone, Search, Wallet, User, FileUp, Compass, Activity as ActivityIcon } from "lucide-react";
+import { Squares2X2Icon as LayoutDashboard, MegaphoneIcon as Megaphone, MagnifyingGlassIcon as Search, WalletIcon as Wallet, UserIcon as User, ArrowUpTrayIcon as FileUp, GlobeAltIcon as Compass, ChartBarIcon as ActivityIcon, HomeIcon, BriefcaseIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 
 import FoundersConsole from "./pages/founders/Console.tsx";
 import BrandDashboard from "./pages/brand/Dashboard.tsx";
@@ -23,11 +24,11 @@ import BrandCampaignDetail from "./pages/brand/CampaignDetail.tsx";
 import BrandDiscover from "./pages/brand/Discover.tsx";
 import BrandBudget from "./pages/brand/Budget.tsx";
 
-import CreatorDashboard from "./pages/creator/Dashboard.tsx";
-import CreatorBrowse from "./pages/creator/BrowseCampaigns.tsx";
+import CreatorHome from "./pages/creator/Home.tsx";
+import CreatorCampaigns from "./pages/creator/Campaigns.tsx";
 import CreatorCampaignDetail from "./pages/creator/CampaignDetail.tsx";
-import CreatorSubmissions from "./pages/creator/Submissions.tsx";
-import CreatorProfile from "./pages/creator/Profile.tsx";
+import CreatorWork from "./pages/creator/Work.tsx";
+import CreatorIdentity from "./pages/creator/Identity.tsx";
 import CreatorWallet from "./pages/creator/Wallet.tsx";
 
 const queryClient = new QueryClient();
@@ -41,12 +42,10 @@ const brandNav: NavItem[] = [
 ];
 
 const creatorNav: NavItem[] = [
-  { to: "/creator", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/creator/campaigns", label: "Browse campaigns", icon: Compass },
-  { to: "/creator/submissions", label: "Submissions", icon: FileUp },
-  { to: "/creator/wallet", label: "Wallet", icon: Wallet },
-  { to: "/creator/profile", label: "Profile", icon: User },
-  { to: "/creator/activity", label: "Activity", icon: ActivityIcon },
+  { to: "/creator", label: "Home", icon: HomeIcon, end: true },
+  { to: "/creator/campaigns", label: "Campaigns", icon: BriefcaseIcon },
+  { to: "/creator/work", label: "Work", icon: ClipboardDocumentCheckIcon },
+  { to: "/creator/profile", label: "Identity", icon: User },
 ];
 
 const RootAppRedirect = () => {
@@ -89,18 +88,20 @@ const App = () => {
               <Route path="/brand/discover" element={<BrandDiscover />} />
               <Route path="/brand/budget" element={<BrandBudget />} />
               <Route path="/brand/activity" element={<Activity />} />
+              <Route path="/brand/settings" element={<Settings />} />
             </Route>
 
             {/* Creator Workspace */}
             <Route element={<AppShell nav={creatorNav} roleLabel="Creator workspace" allowedRole="creator" />}>
-              <Route path="/creator" element={<CreatorDashboard />} />
-              <Route path="/creator/campaigns" element={<CreatorBrowse />} />
+              <Route path="/creator" element={<CreatorHome />} />
+              <Route path="/creator/campaigns" element={<CreatorCampaigns />} />
               <Route path="/creator/campaigns/:id" element={<CreatorCampaignDetail />} />
-              <Route path="/creator/submissions" element={<CreatorSubmissions />} />
+              <Route path="/creator/work" element={<CreatorWork />} />
               <Route path="/creator/wallet" element={<CreatorWallet />} />
               <Route path="/creator/payouts" element={<Navigate to="/creator/wallet" replace />} />
-              <Route path="/creator/profile" element={<CreatorProfile />} />
+              <Route path="/creator/profile" element={<CreatorIdentity />} />
               <Route path="/creator/activity" element={<Activity />} />
+              <Route path="/creator/settings" element={<Settings />} />
             </Route>
 
             {/* Fallbacks */}

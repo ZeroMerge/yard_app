@@ -176,4 +176,99 @@ export class ApplicationsService {
 
     return updated;
   }
+
+  /**
+   * Creator accepts a brand-initiated invitation.
+   * This is the creator-facing counterpart to the brand-scoped accept() method.
+   * Only valid for applications with source='invited' and status='pending'.
+   */
+  async creatorAcceptInvitation(id: string, creatorId: string, userId: string) {
+    const application = await this.prisma.application.findUnique({
+      where: { id },
+      include: { campaign: true, creator: true },
+    });
+
+    if (!application) {
+      throw new NotFoundException(`Application with ID ${id} not found`);
+    }
+
+    if (application.creatorId !== creatorId) {
+      throw new ForbiddenException('Not authorized to respond to this invitation');
+    }
+
+    if (application.source !== 'invited') {
+      throw new BadRequestException('This endpoint is only for brand invitations');
+    }
+
+    if (application.status !== 'pending') {
+      throw new BadRequestException(`Cannot accept invitation in status '${application.status}'`);
+    }
+
+    const updated = await this.prisma.application.update({
+      where: { id },
+      data: { status: 'accepted', decidedAt: new Date() },
+    });
+
+    // Move campaign to in_progress if it's still open
+    if (application.campaign.status === 'open') {
+      await this.prisma.campaign.update({
+        where: { id: application.campaignId },
+        data: { status: 'in_progress' },
+      });
+    }
+
+    await this.prisma.campaignActivity.create({
+      data: {
+        campaignId: application.campaignId,
+        actorId: userId,
+        eventType: 'invitation_accepted',
+        body: `Creator '${application.creator.displayName}' accepted the brand invitation.`,
+      },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Creator declines a brand-initiated invitation.
+   * Sets status to 'rejected' from the creator's side and logs the activity.
+   */
+  async creatorDeclineInvitation(id: string, creatorId: string, userId: string) {
+    const application = await this.prisma.application.findUnique({
+      where: { id },
+      include: { campaign: true, creator: true },
+    });
+
+    if (!application) {
+      throw new NotFoundException(`Application with ID ${id} not found`);
+    }
+
+    if (application.creatorId !== creatorId) {
+      throw new ForbiddenException('Not authorized to respond to this invitation');
+    }
+
+    if (application.source !== 'invited') {
+      throw new BadRequestException('This endpoint is only for brand invitations');
+    }
+
+    if (application.status !== 'pending') {
+      throw new BadRequestException(`Cannot decline invitation in status '${application.status}'`);
+    }
+
+    const updated = await this.prisma.application.update({
+      where: { id },
+      data: { status: 'rejected', decidedAt: new Date() },
+    });
+
+    await this.prisma.campaignActivity.create({
+      data: {
+        campaignId: application.campaignId,
+        actorId: userId,
+        eventType: 'invitation_declined',
+        body: `Creator '${application.creator.displayName}' declined the brand invitation.`,
+      },
+    });
+
+    return updated;
+  }
 }

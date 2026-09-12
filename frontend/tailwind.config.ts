@@ -8,9 +8,11 @@ export default {
     container: { center: true, padding: "1.25rem", screens: { "2xl": "1280px" } },
     extend: {
       fontFamily: {
-        sans: ["'Inter Tight'", "Inter", "system-ui", "sans-serif"],
-        display: ["Fraunces", "'Inter Tight'", "serif"],
+        sans: ["'Mona Sans'", "sans-serif"],
+        body: ["'Mona Sans'", "sans-serif"],
+        display: ["'Mona Sans'", "sans-serif"],
         mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
+        geistMono: ["'Geist Mono'", "'JetBrains Mono'", "ui-monospace", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
