@@ -2,6 +2,7 @@ services:
   - type: web
     name: yard-backend
     runtime: node
+    rootDir: backend
     region: frankfurt
     plan: free
     buildCommand: npm ci && npm run prisma:generate && npm run build

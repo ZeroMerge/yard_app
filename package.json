@@ -13,6 +13,8 @@
     "dev:admin": "npm run dev --workspace=admin",
     "build:frontend": "npm run build --workspace=frontend",
     "build:admin": "npm run build --workspace=admin",
-    "build:backend": "npm --prefix backend run build"
+    "build:backend": "npm --prefix backend run build",
+    "build": "npm --prefix backend run build",
+    "start": "npm --prefix backend run start:prod"
   }
 }
