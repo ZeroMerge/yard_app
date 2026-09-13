@@ -1,0 +1,61 @@
+services:
+  - type: web
+    name: yard-backend
+    runtime: node
+    rootDir: backend
+    region: frankfurt
+    plan: starter
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: DEFAULT_PAYMENT_PROVIDER
+        value: paystack
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: APIFY_API_TOKEN
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: http://localhost:8080,http://localhost:8082,https://app.useyard.dev,https://useyard.dev,https://platform.useyard.dev,https://admin.useyard.dev
+      - key: BACKEND_URL
+        value: https://api.useyard.dev
+      - key: FRONTEND_URL
+        value: https://app.useyard.dev
+
+  - type: web
+    name: yard-admin
+    runtime: static
+    rootDir: admin
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_API_URL
+        value: https://api.useyard.dev
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Content-Security-Policy
+        value: "frame-ancestors 'none'"
+

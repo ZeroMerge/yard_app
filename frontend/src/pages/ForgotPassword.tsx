@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { requestPasswordReset } from "@/lib/auth";
+import { authApi } from "@/api/auth";
 import { toast } from "sonner";
 import { ArrowPathIcon as Loader2, EnvelopeOpenIcon as MailCheck, ArrowLeftIcon as ArrowLeft } from '@heroicons/react/24/outline';
 
@@ -12,21 +12,27 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [devResetUrl, setDevResetUrl] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     setLoading(true);
     try {
-      await requestPasswordReset(email);
+      const res = await authApi.forgotPassword(email);
       setSent(true);
+      if (res.resetUrl) {
+        setDevResetUrl(res.resetUrl);
+      }
+      toast.success("Password reset link sent!");
     } catch (err: any) {
-      // Always show success to avoid enumeration, but log
       setSent(true);
+      toast.success("Password reset link sent!");
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen grid place-items-center bg-background p-6">
@@ -41,6 +47,12 @@ const ForgotPassword = () => {
             <p className="text-muted-foreground text-sm mt-2">
               If an account exists for <span className="text-foreground font-medium">{email}</span>, we've sent a link to reset your password.
             </p>
+            {devResetUrl && (
+              <div className="mt-4 p-3 bg-muted/60 border rounded-md text-xs text-left break-all">
+                <span className="font-semibold text-foreground block mb-1">Development Reset Link:</span>
+                <a href={devResetUrl} className="text-primary hover:underline">{devResetUrl}</a>
+              </div>
+            )}
             <Button asChild variant="outline" className="mt-6"><Link to="/login"><ArrowLeft className="h-4 w-4 mr-2" /> Back to sign in</Link></Button>
           </div>
         ) : (

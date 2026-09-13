@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { creatorsApi } from "@/api/creators";
 import { campaignsApi } from "@/api/campaigns";
 import { Campaign, Creator } from "@/api/types";
@@ -24,6 +24,7 @@ export const money = (amount: number, currency: string = "NGN") =>
 
 export default function Wallet() {
   const user = useAuth()!;
+  const queryClient = useQueryClient();
 
   const { data: profile } = useQuery<Creator>({
     queryKey: ["creator_me"],
@@ -38,17 +39,53 @@ export default function Wallet() {
   const [accountNumber, setAccountNumber] = useState("");
   const [bankCode, setBankCode] = useState("");
 
+  useEffect(() => {
+    if (profile?.payoutAccount) {
+      const acc = profile.payoutAccount as any;
+      if (acc.account_number && !accountNumber) {
+        setAccountNumber(acc.account_number);
+      }
+      if (acc.bank_code && !bankCode) {
+        setBankCode(acc.bank_code);
+      }
+    }
+  }, [profile]);
+
+  const updatePayoutMutation = useMutation({
+    mutationFn: (payoutAccount: any) => creatorsApi.updateMe({ payoutAccount }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["creator_me"] });
+      toast.success("Verified Nigerian NUBAN payout details saved!");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to save payout details");
+    },
+  });
+
   const payments = campaigns.flatMap((c) => (c.payments || []).map((p) => ({ ...p, campaignName: c.name })));
   const totalPaid = payments.filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0);
   const pendingPayouts = payments.filter((p) => p.status === "creator_payout_pending" || p.status === "payment_initiated");
 
   const saveBank = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accountNumber || !bankCode) {
+    const cleanAccount = accountNumber.trim();
+    const cleanBank = bankCode.trim();
+
+    if (!cleanAccount || !cleanBank) {
       toast.error("Please provide both bank code and account number.");
       return;
     }
-    toast.success("Verified Nigerian NUBAN payout details saved!");
+
+    if (cleanAccount.length !== 10 || !/^\d{10}$/.test(cleanAccount)) {
+      toast.error("NUBAN Account Number must be exactly 10 digits.");
+      return;
+    }
+
+    updatePayoutMutation.mutate({
+      bank_code: cleanBank,
+      account_number: cleanAccount,
+      account_name: profile?.displayName || user?.name || "Creator",
+    });
   };
 
   return (
@@ -200,9 +237,10 @@ export default function Wallet() {
 
             <Button
               type="submit"
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-md h-10 text-xs transition-all shadow-xs"
+              disabled={updatePayoutMutation.isPending}
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-md h-10 text-xs transition-all shadow-xs disabled:opacity-50"
             >
-              Save Payout Details
+              {updatePayoutMutation.isPending ? "Saving Payout Details..." : "Save Payout Details"}
             </Button>
           </form>
         </div>

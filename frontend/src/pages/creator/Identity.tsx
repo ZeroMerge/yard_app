@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   CameraIcon,
   CheckBadgeIcon,
@@ -8,22 +8,133 @@ import {
   PhotoIcon,
   ChartBarIcon,
   PlusIcon,
+  CheckIcon,
   ArrowTopRightOnSquareIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as SolidCheck } from "@heroicons/react/24/solid";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { creatorsApi } from "@/api/creators";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+const POPULAR_NICHES = [
+  "Beauty", "Fashion", "Tech", "Lifestyle", "Food", 
+  "Fitness", "Finance", "Gaming", "Travel", "Music", "Education"
+];
+
+const POPULAR_LANGUAGES = [
+  "English", "Pidgin", "Yoruba", "Igbo", "Hausa", "French", "Swahili"
+];
+
 export default function Identity() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"profile" | "rates" | "payout">("profile");
 
   const { data: creator, isLoading } = useQuery({
     queryKey: ['creator', 'me'],
     queryFn: () => creatorsApi.getMe()
   });
+
+  const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState("");
+  const [categoriesText, setCategoriesText] = useState("");
+  const [languagesText, setLanguagesText] = useState("");
+  const [rates, setRates] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (creator) {
+      setDisplayName(creator.displayName || "");
+      setBio(creator.bio || "");
+      setCategoriesText(creator.categories?.map((c: any) => c.category).join(", ") || "");
+      setLanguagesText(creator.languages?.map((l: any) => l.language).join(", ") || "English");
+      setRates(creator.rates?.map((r: any) => ({
+        deliverableType: r.deliverableType,
+        amount: Number(r.amount),
+        currency: r.currency || "NGN",
+      })) || []);
+    }
+  }, [creator]);
+
+  const toggleCategory = (cat: string) => {
+    const current = categoriesText.split(",").map((c) => c.trim()).filter(Boolean);
+    const exists = current.some((c) => c.toLowerCase() === cat.toLowerCase());
+    let next: string[];
+    if (exists) {
+      next = current.filter((c) => c.toLowerCase() !== cat.toLowerCase());
+    } else {
+      next = [...current, cat];
+    }
+    setCategoriesText(next.join(", "));
+  };
+
+  const toggleLanguage = (lang: string) => {
+    const current = languagesText.split(",").map((l) => l.trim()).filter(Boolean);
+    const exists = current.some((l) => l.toLowerCase() === lang.toLowerCase());
+    let next: string[];
+    if (exists) {
+      next = current.filter((l) => l.toLowerCase() !== lang.toLowerCase());
+    } else {
+      next = [...current, lang];
+    }
+    setLanguagesText(next.join(", "));
+  };
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: any) => creatorsApi.updateMe(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['creator', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['creator_me'] });
+      toast.success("Profile updated successfully!");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update profile");
+    },
+  });
+
+  const handleSaveProfile = () => {
+    const cats = categoriesText.split(",").map((c) => c.trim()).filter(Boolean);
+    const langs = languagesText.split(",").map((l) => l.trim()).filter(Boolean);
+    updateProfileMutation.mutate({
+      displayName,
+      bio,
+      categories: cats,
+      languages: langs,
+    });
+  };
+
+
+  const handleSaveRates = () => {
+    updateProfileMutation.mutate({
+      rates: rates.map((r) => ({
+        deliverableType: r.deliverableType,
+        amount: Number(r.amount),
+        currency: r.currency || "NGN",
+      })),
+    });
+  };
+
+  const handleAddRate = () => {
+    setRates([
+      ...rates,
+      {
+        deliverableType: "reels_video",
+        amount: 150000,
+        currency: "NGN",
+      },
+    ]);
+  };
+
+  const handleRemoveRate = (index: number) => {
+    setRates(rates.filter((_, i) => i !== index));
+  };
+
+  const handleRateChange = (index: number, field: string, value: any) => {
+    const updated = [...rates];
+    updated[index] = { ...updated[index], [field]: value };
+    setRates(updated);
+  };
 
   if (isLoading) {
     return (
@@ -151,49 +262,132 @@ export default function Identity() {
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-bold text-foreground block mb-1">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Your creator display name"
+                    className="w-full p-2.5 bg-surface-2 dark:bg-surface border border-border/40 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-foreground block mb-1">
                     Bio & Creative Angle
                   </label>
                   <textarea 
                     rows={4}
-                    defaultValue={creator.bio || ""}
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
                     placeholder="Tell brands about your audience demographics, visual aesthetics, and what makes your content convert..."
                     className="w-full p-3 bg-surface-2 dark:bg-surface border border-border/40 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-foreground block mb-1">
-                      Content Categories
-                    </label>
-                    <input 
-                      type="text" 
-                      defaultValue={creator.categories?.map((c) => c.category).join(", ") || ""}
-                      placeholder="e.g. Beauty, Tech, Lifestyle"
-                      className="w-full p-2.5 bg-surface-2 dark:bg-surface border border-border/40 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                    />
+                {/* Content Categories Tag Picker */}
+                <div>
+                  <label className="text-xs font-bold text-foreground block mb-1">
+                    Content Categories (Niches)
+                  </label>
+                  <input 
+                    type="text" 
+                    value={categoriesText}
+                    onChange={(e) => setCategoriesText(e.target.value)}
+                    placeholder="e.g. Beauty, Tech, Lifestyle"
+                    className="w-full p-2.5 bg-surface-2 dark:bg-surface border border-border/40 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {POPULAR_NICHES.map((niche) => {
+                      const isActive = categoriesText.toLowerCase().includes(niche.toLowerCase());
+                      return (
+                        <button
+                          key={niche}
+                          type="button"
+                          onClick={() => toggleCategory(niche)}
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-semibold transition-colors border",
+                            isActive
+                              ? "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30"
+                              : "bg-surface-2/60 text-muted-foreground border-border/40 hover:text-foreground"
+                          )}
+                        >
+                          {isActive ? (
+                            <CheckIcon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+                          ) : (
+                            <PlusIcon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+                          )}
+                          <span>{niche}</span>
+                        </button>
+                      );
+                    })}
                   </div>
+                  <span className="text-[10px] text-muted-foreground mt-1 block">Click pills to add/remove or type custom comma-separated niches</span>
+                </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-foreground block mb-1">
-                      Primary Location
-                    </label>
-                    <input 
-                      type="text" 
-                      defaultValue={creator.locations?.[0]?.country || "Nigeria"}
-                      placeholder="e.g. Lagos, Nigeria"
-                      className="w-full p-2.5 bg-surface-2 dark:bg-surface border border-border/40 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                    />
+                {/* Languages Tag Picker */}
+                <div>
+                  <label className="text-xs font-bold text-foreground block mb-1">
+                    Languages Spoken & Content Produced In
+                  </label>
+                  <input 
+                    type="text" 
+                    value={languagesText}
+                    onChange={(e) => setLanguagesText(e.target.value)}
+                    placeholder="e.g. English, Pidgin, Yoruba"
+                    className="w-full p-2.5 bg-surface-2 dark:bg-surface border border-border/40 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {POPULAR_LANGUAGES.map((lang) => {
+                      const isActive = languagesText.toLowerCase().includes(lang.toLowerCase());
+                      return (
+                        <button
+                          key={lang}
+                          type="button"
+                          onClick={() => toggleLanguage(lang)}
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-semibold transition-colors border",
+                            isActive
+                              ? "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30"
+                              : "bg-surface-2/60 text-muted-foreground border-border/40 hover:text-foreground"
+                          )}
+                        >
+                          {isActive ? (
+                            <CheckIcon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+                          ) : (
+                            <PlusIcon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+                          )}
+                          <span>{lang}</span>
+                        </button>
+                      );
+                    })}
                   </div>
+                  <span className="text-[10px] text-muted-foreground mt-1 block">Specify languages you create content in</span>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-foreground block mb-1">
+                    Primary Location
+                  </label>
+                  <input 
+                    type="text" 
+                    defaultValue={creator.locations?.[0]?.country || "Nigeria"}
+                    disabled
+                    placeholder="e.g. Lagos, Nigeria"
+                    className="w-full p-2.5 bg-surface-2 dark:bg-surface border border-border/40 rounded-md text-xs opacity-70 cursor-not-allowed"
+                  />
                 </div>
               </div>
 
+
               <div className="pt-2">
                 <button
-                  onClick={() => toast.success("Profile updated successfully")}
-                  className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-md transition-colors shadow-xs"
+                  onClick={handleSaveProfile}
+                  disabled={updateProfileMutation.isPending}
+                  className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-md transition-colors shadow-xs disabled:opacity-50"
                 >
-                  Save Profile Changes
+                  {updateProfileMutation.isPending ? "Saving Profile..." : "Save Profile Changes"}
                 </button>
               </div>
             </div>
@@ -254,33 +448,72 @@ export default function Identity() {
                   <p className="text-xs text-muted-foreground mt-0.5">Baseline pricing for direct brand negotiations.</p>
                 </div>
                 <button
-                  onClick={() => toast.info("Adding new rate card item...")}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-colors shadow-xs"
+                  type="button"
+                  onClick={handleAddRate}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-2 hover:bg-surface-2/80 text-foreground border border-border/40 text-xs font-bold transition-colors shadow-2xs"
                 >
-                  <PlusIcon className="h-3.5 w-3.5" /> Add Rate
+                  <PlusIcon className="h-3.5 w-3.5" /> Add Deliverable Rate
                 </button>
               </div>
 
-              <div className="space-y-2.5 pt-2">
-                {creator.rates?.length ? (
-                  creator.rates.map((rate) => (
-                    <div key={rate.id} className="flex items-center justify-between p-4 rounded-md bg-surface-2/40 border border-border/40 hover:bg-surface-2/70 hover:border-transparent transition-all duration-150">
-                      <div>
-                        <div className="font-bold text-sm text-foreground capitalize">
-                          {rate.deliverableType.replace("_", " ")}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">Single Deliverable</div>
+              <div className="space-y-3 pt-2">
+                {rates.length > 0 ? (
+                  rates.map((rate, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3.5 rounded-md bg-surface-2/40 border border-border/40">
+                      <div className="flex-1 w-full sm:w-auto">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Deliverable Format</label>
+                        <select
+                          value={rate.deliverableType}
+                          onChange={(e) => handleRateChange(idx, "deliverableType", e.target.value)}
+                          className="w-full h-9 rounded-md bg-card border border-border/40 px-2.5 text-xs text-foreground font-semibold"
+                        >
+                          <option value="reels_video">Instagram Reel (30-60s)</option>
+                          <option value="ugc_video">UGC Raw Video Assets</option>
+                          <option value="story_post">Instagram Story Sequence</option>
+                          <option value="tiktok_video">TikTok Video</option>
+                          <option value="youtube_dedicated">YouTube Dedicated Video</option>
+                          <option value="youtube_integrated">YouTube Integrated Mention</option>
+                        </select>
                       </div>
-                      <div className="font-display font-extrabold text-base text-foreground font-numeric">
-                        {rate.currency === "NGN" ? "₦" : "$"}{Number(rate.amount).toLocaleString()}
+
+                      <div className="w-full sm:w-44">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Rate ({rate.currency || 'NGN'})</label>
+                        <input
+                          type="number"
+                          value={rate.amount}
+                          onChange={(e) => handleRateChange(idx, "amount", e.target.value)}
+                          className="w-full h-9 rounded-md bg-card border border-border/40 px-2.5 text-xs text-foreground font-numeric font-bold"
+                        />
+                      </div>
+
+                      <div className="pt-2 sm:pt-4">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRate(idx)}
+                          className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-md transition-colors"
+                          title="Remove rate"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="text-center py-8 text-xs text-muted-foreground">
-                    No custom rates set. Standard platform rates apply.
+                    No custom rates set. Click "Add Deliverable Rate" to configure your rate card.
                   </div>
                 )}
+              </div>
+
+              <div className="pt-3 border-t border-border/40 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSaveRates}
+                  disabled={updateProfileMutation.isPending}
+                  className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-md transition-colors shadow-xs disabled:opacity-50"
+                >
+                  {updateProfileMutation.isPending ? "Saving Rates..." : "Save Rate Card Changes"}
+                </button>
               </div>
             </div>
 
@@ -293,9 +526,10 @@ export default function Identity() {
                 </div>
                 <button
                   onClick={() => toast.info("Opening media upload...")}
-                  className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline"
                 >
-                  + Upload Media
+                  <PlusIcon className="h-3.5 w-3.5 stroke-[2.5]" />
+                  <span>Upload Media</span>
                 </button>
               </div>
 

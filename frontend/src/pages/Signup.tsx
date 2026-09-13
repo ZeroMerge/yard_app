@@ -21,6 +21,7 @@ const Signup = () => {
   const [role, setRole] = useState<Role>("creator");
   const [loading, setLoading] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [devVerifyUrl, setDevVerifyUrl] = useState<string | null>(null);
 
   // Shared
   const [email, setEmail] = useState("");
@@ -40,11 +41,12 @@ const Signup = () => {
     if (loading) return;
     setLoading(true);
     try {
+      let res: any;
       if (role === "creator") {
         if (!fullName || !country || !phone) {
           toast.error("Please complete all required fields."); setLoading(false); return;
         }
-        await signUpWithPassword({
+        res = await signUpWithPassword({
           role: "creator",
           full_name: fullName,
           email, password, phone, country,
@@ -53,13 +55,16 @@ const Signup = () => {
         if (!businessName || !contactPerson || !country || !phone) {
           toast.error("Please complete all required fields."); setLoading(false); return;
         }
-        await signUpWithPassword({
+        res = await signUpWithPassword({
           role: "brand",
           full_name: contactPerson,
           contact_person: contactPerson,
           business_name: businessName,
           email, password, phone, country,
         } as any);
+      }
+      if (res?.verificationUrl) {
+        setDevVerifyUrl(res.verificationUrl);
       }
       const u = getCurrentUser();
       if (u) {
@@ -109,10 +114,17 @@ const Signup = () => {
               <p className="text-muted-foreground text-sm mt-2">
                 We sent a confirmation link to <span className="text-foreground font-semibold">{pendingEmail}</span>. Click it to activate your account, then sign in.
               </p>
+              {devVerifyUrl && (
+                <div className="mt-4 p-3 bg-muted/60 border rounded-md text-xs text-left break-all">
+                  <span className="font-semibold text-foreground block mb-1">Development Verification Link:</span>
+                  <a href={devVerifyUrl} className="text-primary hover:underline">{devVerifyUrl}</a>
+                </div>
+              )}
               <Button asChild className="w-full mt-8"><Link to="/login">Go to sign in</Link></Button>
               <p className="mt-4 text-xs text-muted-foreground">Didn't get it? Check your spam folder.</p>
             </div>
           ) : step === "role" ? (
+
             <>
               <h1 className="font-display text-2xl font-bold text-foreground">Get Started</h1>
               <p className="text-muted-foreground text-sm mt-1">Welcome to CreatorYard - Let's create your account</p>

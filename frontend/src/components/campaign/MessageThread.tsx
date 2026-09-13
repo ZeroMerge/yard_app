@@ -5,7 +5,7 @@ import { loadDB, saveDB, uid } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
-import { PaperClipIcon as Paperclip, PaperAirplaneIcon as Send } from '@heroicons/react/24/outline';
+import { PaperClipIcon as Paperclip, PaperAirplaneIcon as Send, XMarkIcon as X } from '@heroicons/react/24/outline';
 import { motion } from "framer-motion";
 import { pushActivity } from "@/lib/activity";
 
@@ -98,8 +98,13 @@ export const MessageThread = ({ campaignId, otherPartyIds }: Props) => {
       <div className="p-3 border-t border-border/40 space-y-2">
         {attachment && (
           <div className="text-xs text-muted-foreground flex items-center justify-between bg-surface-2 border border-border/40 rounded-md px-2.5 py-1">
-            <span className="truncate">📎 {attachment.name}</span>
-            <button onClick={() => setAttachment(null)} className="ml-2 text-foreground font-bold">×</button>
+            <span className="truncate inline-flex items-center gap-1.5">
+              <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <span>{attachment.name}</span>
+            </span>
+            <button onClick={() => setAttachment(null)} className="ml-2 p-0.5 text-muted-foreground hover:text-foreground rounded transition-colors" aria-label="Remove attachment">
+              <X className="h-3.5 w-3.5" />
+            </button>
           </div>
         )}
         <div className="flex items-center gap-2">

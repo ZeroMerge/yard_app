@@ -39,6 +39,17 @@ export class CreatorsService {
       };
     }
 
+    if (filter.minFollowers) {
+      const min = Number(filter.minFollowers);
+      if (!isNaN(min) && min > 0) {
+        where.socialMetricSnapshots = {
+          some: {
+            followers: { gte: min },
+          },
+        };
+      }
+    }
+
     if (filter.maxRate) {
       where.rates = {
         some: { amount: { lte: filter.maxRate } },
@@ -49,13 +60,16 @@ export class CreatorsService {
       where,
       include: {
         socialAccounts: true,
+        socialMetricSnapshots: true,
         categories: true,
+        languages: true,
         locations: true,
         rates: true,
         stats: true,
       },
     });
   }
+
 
   async findOne(id: string) {
     const creator = await this.prisma.creator.findUnique({
@@ -97,7 +111,8 @@ export class CreatorsService {
 
   async updateProfile(userId: string, data: any) {
     const creator = await this.findByUserId(userId);
-    return this.prisma.creator.update({
+
+    await this.prisma.creator.update({
       where: { id: creator.id },
       data: {
         displayName: data.displayName || creator.displayName,
@@ -106,6 +121,57 @@ export class CreatorsService {
         payoutAccount: data.payoutAccount ? data.payoutAccount : creator.payoutAccount,
       },
     });
+
+    // Handle rates if provided
+    if (Array.isArray(data.rates)) {
+      await this.prisma.creatorRate.deleteMany({
+        where: { creatorId: creator.id },
+      });
+      if (data.rates.length > 0) {
+        await this.prisma.creatorRate.createMany({
+          data: data.rates.map((r: any) => ({
+            creatorId: creator.id,
+            deliverableType: r.deliverableType,
+            amount: Number(r.amount),
+            currency: r.currency || 'NGN',
+          })),
+        });
+      }
+    }
+
+    // Handle categories if provided
+    if (Array.isArray(data.categories)) {
+      await this.prisma.creatorCategory.deleteMany({
+        where: { creatorId: creator.id },
+      });
+      if (data.categories.length > 0) {
+        await this.prisma.creatorCategory.createMany({
+          data: data.categories.map((cat: any) => ({
+            creatorId: creator.id,
+            category: (typeof cat === 'string' ? cat : cat.category).toLowerCase().trim(),
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
+
+    // Handle languages if provided
+    if (Array.isArray(data.languages)) {
+      await this.prisma.creatorLanguage.deleteMany({
+        where: { creatorId: creator.id },
+      });
+      if (data.languages.length > 0) {
+        await this.prisma.creatorLanguage.createMany({
+          data: data.languages.map((lang: any) => ({
+            creatorId: creator.id,
+            language: (typeof lang === 'string' ? lang : lang.language).trim(),
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
+
+    return this.findOne(creator.id);
   }
 
   async getHomeState(userId: string) {

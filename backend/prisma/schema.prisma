@@ -20,6 +20,8 @@ model User {
   creators            Creator[]
   filesUploaded       File[]
   organizationMembers OrganizationMember[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
 
   @@index([role, status])
   @@map("users")
@@ -160,31 +162,35 @@ model CreatorPortfolio {
 }
 
 model Campaign {
-  id                  String                @id @default(uuid())
-  organizationId      String                @map("organization_id")
-  name                String
-  goal                String
-  category            String
-  country             String
-  city                String?
-  brief               String
-  deliverableType     String                @map("deliverable_type")
-  quantity            Int
-  budgetPerCreator    Decimal               @map("budget_per_creator") @db.Decimal(12, 2)
-  currency            String                @default("NGN")
-  status              String                @default("draft")
-  applicationDeadline DateTime?             @map("application_deadline")
-  deliveryDeadline    DateTime?             @map("delivery_deadline")
-  createdAt           DateTime              @default(now()) @map("created_at")
-  updatedAt           DateTime              @updatedAt @map("updated_at")
-  applications        Application[]
-  activities          CampaignActivity[]
-  platforms           CampaignPlatform[]
-  requirements        CampaignRequirement[]
-  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  deliverables        Deliverable[]
-  files               File[]
-  payments            Payment[]
+  id                        String                @id @default(uuid())
+  organizationId            String                @map("organization_id")
+  name                      String
+  goal                      String
+  category                  String
+  country                   String
+  city                      String?
+  brief                     String
+  deliverableType           String                @map("deliverable_type")
+  quantity                  Int
+  budgetPerCreator          Decimal               @map("budget_per_creator") @db.Decimal(12, 2)
+  currency                  String                @default("NGN")
+  status                    String                @default("draft")
+  isPrivate                 Boolean               @default(false) @map("is_private")
+  isArchived                Boolean               @default(false) @map("is_archived")
+  allowReApplication        Boolean               @default(true) @map("allow_re_application")
+  reApplicationCooldownDays Int                   @default(3) @map("re_application_cooldown_days")
+  applicationDeadline       DateTime?             @map("application_deadline")
+  deliveryDeadline          DateTime?             @map("delivery_deadline")
+  createdAt                 DateTime              @default(now()) @map("created_at")
+  updatedAt                 DateTime              @updatedAt @map("updated_at")
+  applications              Application[]
+  activities                CampaignActivity[]
+  platforms                 CampaignPlatform[]
+  requirements              CampaignRequirement[]
+  organization              Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deliverables              Deliverable[]
+  files                     File[]
+  payments                  Payment[]
 
   @@index([organizationId])
   @@index([status])
@@ -217,20 +223,27 @@ model CampaignRequirement {
 }
 
 model Application {
-  id           String        @id @default(uuid())
-  campaignId   String        @map("campaign_id")
-  creatorId    String        @map("creator_id")
-  source       String        @default("applied")
-  status       String        @default("pending")
-  pitch        String?
-  createdAt    DateTime      @default(now()) @map("created_at")
-  decidedAt    DateTime?     @map("decided_at")
-  campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  creator      Creator       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  deliverables Deliverable[]
-  payments     Payment[]
+  id                    String        @id @default(uuid())
+  campaignId            String        @map("campaign_id")
+  creatorId             String        @map("creator_id")
+  source                String        @default("applied")
+  status                String        @default("pending")
+  pitch                 String?
+  parentApplicationId   String?       @map("parent_application_id")
+  reApplicationCount    Int           @default(0) @map("re_application_count")
+  rejectedAt            DateTime?     @map("rejected_at")
+  rejectedCooldownDays  Int?          @map("rejected_cooldown_days")
+  blockedFromReApply    Boolean       @default(false) @map("blocked_from_re_apply")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  decidedAt             DateTime?     @map("decided_at")
+  campaign              Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  creator               Creator       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  parentApplication     Application?  @relation("ApplicationChain", fields: [parentApplicationId], references: [id])
+  childApplications     Application[] @relation("ApplicationChain")
+  deliverables          Deliverable[]
+  payments              Payment[]
 
-  @@unique([campaignId, creatorId])
+  @@index([campaignId, creatorId])
   @@index([campaignId, status])
   @@index([creatorId, status])
   @@index([creatorId, status, decidedAt])
@@ -266,6 +279,7 @@ model Deliverable {
   applicationId String      @map("application_id")
   fileId        String      @map("file_id")
   status        String      @default("submitted")
+  notes         String?     @map("notes")
   revisionNotes String?     @map("revision_notes")
   version       Int         @default(1)
   submittedAt   DateTime    @default(now()) @map("submitted_at")
@@ -416,4 +430,34 @@ model AuditLog {
   @@index([actorId, createdAt])
   @@index([action])
   @@map("audit_logs")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("email_verification_tokens")
 }

@@ -1,6 +1,7 @@
 import { ApiResponse } from './types';
+import { toast } from 'sonner';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export class ApiError extends Error {
   constructor(
@@ -50,6 +51,21 @@ export async function apiClient<T>(
     const json: ApiResponse<T> = await response.json();
 
     if (!response.ok || json.error) {
+      if (response.status === 401) {
+        setAuthToken(null);
+        if (typeof window !== 'undefined') {
+          const path = window.location.pathname;
+          if (
+            !path.startsWith('/login') &&
+            !path.startsWith('/signup') &&
+            !path.startsWith('/forgot-password') &&
+            !path.startsWith('/reset-password')
+          ) {
+            toast.error('Session expired. Please sign in again.');
+            window.location.href = '/login';
+          }
+        }
+      }
       const errorMsg = json.error?.message || `HTTP error ${response.status}: ${response.statusText}`;
       const errorCode = json.error?.code || `HTTP_${response.status}`;
       throw new ApiError(errorCode, errorMsg, json.error?.details);

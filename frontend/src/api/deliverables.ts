@@ -2,11 +2,12 @@ import { apiClient } from './client';
 import { Deliverable } from './types';
 
 export interface SubmitDeliverablePayload {
-  providerFileId: string;
-  providerUrl?: string;
+  providerFileId?: string;
+  providerUrl: string;
   provider?: string;
   fileType?: string;
   fileSize?: number;
+  notes?: string;
 }
 
 export interface RequestRevisionPayload {

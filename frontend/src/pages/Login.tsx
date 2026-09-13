@@ -1,9 +1,9 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { dashboardPathFor, signInWithPassword, getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -11,9 +11,21 @@ import { AuthShowcase } from "@/components/AuthShowcase";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("verified") === "true") {
+      toast.success("Email verified successfully! You can now sign in.");
+    }
+    const err = searchParams.get("verification_error");
+    if (err) {
+      toast.error(decodeURIComponent(err));
+    }
+  }, [searchParams]);
+
 
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();

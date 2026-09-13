@@ -62,7 +62,14 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/payments')
   ) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request).catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        return new Response(
+          JSON.stringify({ error: { message: 'Network offline or unreachable', code: 'OFFLINE' } }),
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
+      })
     );
     return;
   }
@@ -72,13 +79,19 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          if (response.status === 200 && response.type === 'basic') {
+          if (response && response.status === 200 && response.type === 'basic') {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone).catch(() => {}));
           }
           return response;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(async () => {
+          const cachedIndex = await caches.match('/index.html');
+          if (cachedIndex) return cachedIndex;
+          const cachedRoot = await caches.match('/');
+          if (cachedRoot) return cachedRoot;
+          return new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/html' } });
+        })
     );
     return;
   }
@@ -89,13 +102,19 @@ self.addEventListener('fetch', (event) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone).catch(() => {}));
-        }
-        return networkResponse;
-      }).catch(() => caches.match(event.request));
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone).catch(() => {}));
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          const fallback = await caches.match(event.request);
+          if (fallback) return fallback;
+          return new Response('', { status: 404 });
+        });
     })
   );
 });

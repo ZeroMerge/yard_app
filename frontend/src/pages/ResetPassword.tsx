@@ -1,16 +1,18 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
-import { updatePassword, dashboardPathFor, getCurrentUser } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { authApi } from "@/api/auth";
 import { toast } from "sonner";
 import { ArrowPathIcon as Loader2 } from '@heroicons/react/24/outline';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token") || "";
+
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,42 +20,40 @@ const ResetPassword = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Supabase handles the recovery token in the URL hash and establishes a session.
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-      else {
-        // Give it a beat for hash processing
-        setTimeout(() => {
-          supabase.auth.getSession().then(({ data: d2 }) => {
-            if (d2.session) setReady(true);
-            else setError("This reset link is invalid or has expired. Request a new one.");
-          });
-        }, 800);
-      }
-    });
-    return () => { sub.subscription.unsubscribe(); };
-  }, []);
+    if (!token) {
+      setError("No reset token provided. Please request a new password reset link.");
+      setReady(false);
+    } else {
+      setError(null);
+      setReady(true);
+    }
+  }, [token]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
-    if (password.length < 8) { toast.error("Password must be at least 8 characters."); return; }
-    if (password !== confirm) { toast.error("Passwords don't match."); return; }
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirm) {
+      toast.error("Passwords don't match.");
+      return;
+    }
     setLoading(true);
     try {
-      await updatePassword(password);
-      toast.success("Password updated. You're signed in.");
-      const u = getCurrentUser();
-      navigate(u ? dashboardPathFor(u.role) : "/login");
+      await authApi.resetPassword(token, password);
+      toast.success("Password updated successfully! Please sign in with your new password.");
+      navigate("/login");
     } catch (err: any) {
-      toast.error(err?.message ?? "Could not update password.");
+      const msg = err?.message || "Could not update password.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen grid place-items-center bg-background p-6">

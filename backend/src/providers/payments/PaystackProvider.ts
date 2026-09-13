@@ -12,6 +12,13 @@ export class PaystackProvider implements PaymentProvider {
     this.secretKey = this.configService.get<string>('PAYSTACK_SECRET_KEY', 'sk_test_mock_paystack_key');
   }
 
+  private isRealKey(): boolean {
+    return (
+      (this.secretKey.startsWith('sk_live_') || this.secretKey.startsWith('sk_test_')) &&
+      !this.secretKey.includes('mock')
+    );
+  }
+
   async initiateCharge(amount: number, currency: string, metadata: Record<string, any>): Promise<PaymentInitiateResult> {
     const ref = `pstk_tx_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     this.logger.log(`[Paystack] Initializing charge of ${currency} ${amount} (ref: ${ref})`);
@@ -19,7 +26,7 @@ export class PaystackProvider implements PaymentProvider {
     // Paystack amounts are in kobo (e.g. NGN 100 = 10000 kobo)
     const amountInKobo = Math.round(amount * 100);
 
-    if (this.secretKey.startsWith('sk_live_') || this.secretKey.startsWith('sk_test_live_')) {
+    if (this.isRealKey()) {
       try {
         const response = await fetch('https://api.paystack.co/transaction/initialize', {
           method: 'POST',
@@ -60,7 +67,7 @@ export class PaystackProvider implements PaymentProvider {
   async verifyCharge(ref: string): Promise<PaymentVerifyResult> {
     this.logger.log(`[Paystack] Verifying charge ref: ${ref}`);
 
-    if (this.secretKey.startsWith('sk_live_') || this.secretKey.startsWith('sk_test_live_')) {
+    if (this.isRealKey()) {
       try {
         const response = await fetch(`https://api.paystack.co/transaction/verify/${ref}`, {
           method: 'GET',
@@ -94,7 +101,7 @@ export class PaystackProvider implements PaymentProvider {
 
     const amountInKobo = Math.round(amount * 100);
 
-    if (this.secretKey.startsWith('sk_live_') || this.secretKey.startsWith('sk_test_live_')) {
+    if (this.isRealKey()) {
       try {
         // Step 1: Create or fetch transfer recipient
         const recipientRes = await fetch('https://api.paystack.co/transferrecipient', {

@@ -53,6 +53,7 @@ export const StatusPill = ({ status }: { status: string }) => {
     rejected: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20",
     failed: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20",
     cancelled: "bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border border-neutral-500/20",
+    closed: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20",
   };
   return (
     <span className={cn("inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-semibold capitalize tracking-wide transition-all", map[status] ?? map.draft)}>

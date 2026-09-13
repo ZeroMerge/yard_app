@@ -16,6 +16,8 @@ export interface CreateCampaignPayload {
   deliveryDeadline?: string;
   minFollowers?: number;
   platforms?: string[];
+  isPrivate?: boolean;
+  publishImmediately?: boolean;
 }
 
 export const campaignsApi = {
@@ -43,6 +45,40 @@ export const campaignsApi = {
   cancel: async (id: string): Promise<Campaign> => {
     return apiClient<Campaign>(`/campaigns/${id}/cancel`, {
       method: 'PATCH',
+    });
+  },
+
+  close: async (id: string): Promise<Campaign> => {
+    return apiClient<Campaign>(`/campaigns/${id}/close`, {
+      method: 'PATCH',
+    });
+  },
+
+  archive: async (id: string): Promise<Campaign> => {
+    return apiClient<Campaign>(`/campaigns/${id}/archive`, {
+      method: 'PATCH',
+    });
+  },
+
+  unarchive: async (id: string): Promise<Campaign> => {
+    return apiClient<Campaign>(`/campaigns/${id}/unarchive`, {
+      method: 'PATCH',
+    });
+  },
+
+  updateReApplicationSettings: async (
+    id: string,
+    payload: { allowReApplication?: boolean; reApplicationCooldownDays?: number },
+  ): Promise<Campaign> => {
+    return apiClient<Campaign>(`/campaigns/${id}/reapplication-settings`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteDraft: async (id: string): Promise<{ success: boolean; message: string }> => {
+    return apiClient<{ success: boolean; message: string }>(`/campaigns/${id}`, {
+      method: 'DELETE',
     });
   },
 };

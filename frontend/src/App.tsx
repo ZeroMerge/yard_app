@@ -14,9 +14,9 @@ import ResetPassword from "./pages/ResetPassword.tsx";
 import Activity from "./pages/Activity.tsx";
 import Settings from "./pages/Settings.tsx";
 import { AppShell, type NavItem } from "./components/AppShell.tsx";
+import { PwaInstallPrompt } from "./components/PwaInstallPrompt.tsx";
 import { Squares2X2Icon as LayoutDashboard, MegaphoneIcon as Megaphone, MagnifyingGlassIcon as Search, WalletIcon as Wallet, UserIcon as User, ArrowUpTrayIcon as FileUp, GlobeAltIcon as Compass, ChartBarIcon as ActivityIcon, HomeIcon, BriefcaseIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 
-import FoundersConsole from "./pages/founders/Console.tsx";
 import BrandDashboard from "./pages/brand/Dashboard.tsx";
 import BrandCampaigns from "./pages/brand/Campaigns.tsx";
 import BrandNewCampaign from "./pages/brand/NewCampaign.tsx";
@@ -45,13 +45,46 @@ const creatorNav: NavItem[] = [
   { to: "/creator", label: "Home", icon: HomeIcon, end: true },
   { to: "/creator/campaigns", label: "Campaigns", icon: BriefcaseIcon },
   { to: "/creator/work", label: "Work", icon: ClipboardDocumentCheckIcon },
+  { to: "/creator/wallet", label: "Wallet", icon: Wallet },
   { to: "/creator/profile", label: "Identity", icon: User },
 ];
+
+const AdminPortalNotice = () => {
+  const adminUrl =
+    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://localhost:8082"
+      : "https://admin.useyard.dev";
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+      <div className="max-w-md space-y-4 p-8 rounded-md bg-card border border-border/60 shadow-2xs">
+        <div className="h-12 w-12 rounded-md bg-teal-600 flex items-center justify-center text-white font-bold text-lg mx-auto shadow-xs">
+          Y
+        </div>
+        <h2 className="font-display font-bold text-lg text-foreground">
+          Dedicated Admin Command Center
+        </h2>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Administrative control, moderation, and escrow settlement tools have been moved to the standalone Yard Admin application.
+        </p>
+        <div className="pt-2">
+          <a
+            href={adminUrl}
+            className="inline-flex items-center justify-center px-4 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold shadow-xs transition-colors"
+          >
+            Launch Yard Admin Portal &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const RootAppRedirect = () => {
   const user = useAuth();
   if (user?.role === "brand") return <Navigate to="/brand" replace />;
   if (user?.role === "creator") return <Navigate to="/creator" replace />;
+  if (user?.role === "admin") return <AdminPortalNotice />;
   return <Navigate to="/login" replace />;
 };
 
@@ -66,6 +99,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <PwaInstallPrompt />
           <Routes>
             {/* Pure SaaS Web App Root (Straight-Ahead on app.yard.com) */}
             <Route path="/" element={<RootAppRedirect />} />
@@ -76,8 +110,7 @@ const App = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* Founders / Admin Console */}
-            <Route path="/founders/console" element={<FoundersConsole />} />
+
 
             {/* Brand Workspace */}
             <Route element={<AppShell nav={brandNav} roleLabel="Brand workspace" allowedRole="brand" />}>
@@ -104,8 +137,9 @@ const App = () => {
               <Route path="/creator/settings" element={<Settings />} />
             </Route>
 
-            {/* Fallbacks */}
-            <Route path="/admin/*" element={<Navigate to="/founders/console" replace />} />
+            {/* Dedicated Admin Portal Routes */}
+            <Route path="/admin/*" element={<AdminPortalNotice />} />
+            <Route path="/founders/*" element={<AdminPortalNotice />} />
             <Route path="/index" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

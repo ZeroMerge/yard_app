@@ -23,9 +23,32 @@ const notify = () => authListeners.forEach((fn) => fn());
 let cachedUser: AuthUser | null = null;
 let hasHydrated = false;
 
+export function isJwtExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(''),
+    );
+    const parsed = JSON.parse(jsonPayload);
+    if (!parsed.exp) return false;
+    return Date.now() >= parsed.exp * 1000;
+  } catch {
+    return false;
+  }
+}
+
 export const hydrateFromSession = async () => {
   const token = getAuthToken();
-  if (!token) {
+  if (!token || isJwtExpired(token)) {
+    if (token) {
+      setAuthToken(null);
+    }
     cachedUser = null;
     hasHydrated = true;
     notify();
@@ -52,6 +75,7 @@ export const hydrateFromSession = async () => {
     notify();
   }
 };
+
 
 // Initial hydrate
 hydrateFromSession();
@@ -119,7 +143,7 @@ export const signUpWithPassword = async (input: CreatorSignupData | BrandSignupD
     name,
   });
 
-  if (res.user) {
+  if (res.user && (res.user as any).status !== 'pending_verification') {
     cachedUser = {
       id: res.user.id,
       role: res.user.role,
@@ -132,9 +156,15 @@ export const signUpWithPassword = async (input: CreatorSignupData | BrandSignupD
     };
     hasHydrated = true;
     notify();
+  } else {
+    authApi.logout();
+    cachedUser = null;
+    hasHydrated = true;
+    notify();
   }
   return res;
 };
+
 
 export const signOut = async () => {
   authApi.logout();
@@ -144,9 +174,9 @@ export const signOut = async () => {
 };
 
 export const requestPasswordReset = async (email: string) => {
-  // Password reset request
-  return true;
+  return authApi.forgotPassword(email);
 };
+
 
 export const updatePassword = async (password: string) => {
   return true;
@@ -189,4 +219,4 @@ export const useIsAdmin = () => {
 };
 
 export const dashboardPathFor = (role: Role) =>
-  role === "brand" ? "/brand" : role === "creator" ? "/creator" : "/founders/console";
+  role === "brand" ? "/brand" : role === "creator" ? "/creator" : "/admin";
